@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Lift Log"
+description = "A mobile-first Olympic weightlifting workout tracker for setting athlete PBs, building weekly programmes, completing training sets, and reviewing workout history in the gym."
+version = "1.0.0"
+id = "artifacts/lift-log"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21583
+
+[services.development]
+run = "pnpm --filter @workspace/lift-log run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lift-log", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/lift-log/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21583"
+BASE_PATH = "/"

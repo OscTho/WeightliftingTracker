@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Olympic weightlifting workout tracking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: Athlete profile and personal bests
+  - name: programmes
+    description: Weekly training programmes
+  - name: workouts
+    description: Training sessions and set outcomes
+  - name: history
+    description: Completed training history
 paths:
   /healthz:
     get:
@@ -24,7 +32,232 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get the athlete profile
+      responses:
+        "200":
+          description: Athlete profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AthleteProfile"
+    put:
+      operationId: saveProfile
+      tags: [profile]
+      summary: Create or update the athlete profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AthleteProfileInput"
+      responses:
+        "200":
+          description: Saved athlete profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AthleteProfile"
+  /programmes:
+    get:
+      operationId: getProgrammes
+      tags: [programmes]
+      summary: List weekly programmes
+      responses:
+        "200":
+          description: Weekly programmes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProgrammeSummary"
+    post:
+      operationId: createProgramme
+      tags: [programmes]
+      summary: Create a weekly programme
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgrammeInput"
+      responses:
+        "201":
+          description: Created programme
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Programme"
+  /programmes/{programmeId}:
+    parameters:
+      - $ref: "#/components/parameters/ProgrammeId"
+    get:
+      operationId: getProgramme
+      tags: [programmes]
+      summary: Get a programme with all sessions and exercises
+      responses:
+        "200":
+          description: Programme details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Programme"
+    put:
+      operationId: updateProgramme
+      tags: [programmes]
+      summary: Replace a weekly programme
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgrammeInput"
+      responses:
+        "200":
+          description: Updated programme
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Programme"
+    delete:
+      operationId: deleteProgramme
+      tags: [programmes]
+      summary: Delete a weekly programme
+      responses:
+        "204":
+          description: Programme deleted
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [history]
+      summary: Get the next planned session and recent training summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /history:
+    get:
+      operationId: getHistory
+      tags: [history]
+      summary: List completed workout history
+      responses:
+        "200":
+          description: Workout history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkoutSummary"
+  /workouts:
+    post:
+      operationId: startWorkout
+      tags: [workouts]
+      summary: Start a workout from a programme session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartWorkoutInput"
+      responses:
+        "201":
+          description: Started workout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
+  /workouts/{workoutId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+    get:
+      operationId: getWorkout
+      tags: [workouts]
+      summary: Get a workout and its set outcomes
+      responses:
+        "200":
+          description: Workout details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
+  /workouts/{workoutId}/sets/{setId}/complete:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+      - $ref: "#/components/parameters/SetId"
+    post:
+      operationId: completeSet
+      tags: [workouts]
+      summary: Mark a set complete
+      responses:
+        "200":
+          description: Updated workout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
+  /workouts/{workoutId}/sets/{setId}/miss:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+      - $ref: "#/components/parameters/SetId"
+    post:
+      operationId: missSet
+      tags: [workouts]
+      summary: Mark a set missed and either retry it or move on
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MissSetInput"
+      responses:
+        "200":
+          description: Updated workout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
+  /workouts/{workoutId}/finish:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+    post:
+      operationId: finishWorkout
+      tags: [workouts]
+      summary: Finish the current workout
+      responses:
+        "200":
+          description: Finished workout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
 components:
+  parameters:
+    ProgrammeId:
+      name: programmeId
+      in: path
+      required: true
+      schema:
+        type: integer
+    WorkoutId:
+      name: workoutId
+      in: path
+      required: true
+      schema:
+        type: integer
+    SetId:
+      name: setId
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +266,182 @@ components:
           type: string
       required:
         - status
+    AthleteProfile:
+      type: object
+      required: [id, name, snatchPb, cleanJerkPb, backSquatPb, frontSquatPb, roundingIncrement]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        snatchPb: { type: number }
+        cleanJerkPb: { type: number }
+        backSquatPb: { type: number }
+        frontSquatPb: { type: number }
+        roundingIncrement:
+          type: number
+          enum: [1, 2, 2.5]
+    AthleteProfileInput:
+      type: object
+      required: [name, snatchPb, cleanJerkPb, backSquatPb, frontSquatPb, roundingIncrement]
+      properties:
+        name: { type: string, minLength: 1 }
+        snatchPb: { type: number, minimum: 0 }
+        cleanJerkPb: { type: number, minimum: 0 }
+        backSquatPb: { type: number, minimum: 0 }
+        frontSquatPb: { type: number, minimum: 0 }
+        roundingIncrement:
+          type: number
+          enum: [1, 2, 2.5]
+    ExerciseName:
+      type: string
+      enum: [snatch, clean_and_jerk, back_squat, front_squat]
+    ProgrammeExerciseInput:
+      type: object
+      required: [exercise, sets, reps, percentage]
+      properties:
+        exercise: { $ref: "#/components/schemas/ExerciseName" }
+        sets: { type: integer, minimum: 1, maximum: 30 }
+        reps: { type: integer, minimum: 1, maximum: 20 }
+        percentage: { type: number, minimum: 1, maximum: 150 }
+    ProgrammeSessionInput:
+      type: object
+      required: [sessionNumber, name, exercises]
+      properties:
+        sessionNumber: { type: integer, minimum: 1 }
+        name: { type: string, minLength: 1 }
+        exercises:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ProgrammeExerciseInput" }
+    ProgrammeInput:
+      type: object
+      required: [name, sessionsPerWeek, sessions]
+      properties:
+        name: { type: string, minLength: 1 }
+        sessionsPerWeek: { type: integer, minimum: 1, maximum: 14 }
+        sessions:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ProgrammeSessionInput" }
+    ProgrammeExercise:
+      allOf:
+        - $ref: "#/components/schemas/ProgrammeExerciseInput"
+        - type: object
+          required: [id, order]
+          properties:
+            id: { type: integer }
+            order: { type: integer }
+    ProgrammeSession:
+      type: object
+      required: [id, sessionNumber, name, exercises]
+      properties:
+        id: { type: integer }
+        sessionNumber: { type: integer }
+        name: { type: string }
+        exercises:
+          type: array
+          items: { $ref: "#/components/schemas/ProgrammeExercise" }
+    Programme:
+      type: object
+      required: [id, name, sessionsPerWeek, sessions, createdAt, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sessionsPerWeek: { type: integer }
+        sessions:
+          type: array
+          items: { $ref: "#/components/schemas/ProgrammeSession" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ProgrammeSummary:
+      type: object
+      required: [id, name, sessionsPerWeek, sessionNames, updatedAt]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        sessionsPerWeek: { type: integer }
+        sessionNames:
+          type: array
+          items: { type: string }
+        updatedAt: { type: string, format: date-time }
+    StartWorkoutInput:
+      type: object
+      required: [programmeId, sessionNumber]
+      properties:
+        programmeId: { type: integer }
+        sessionNumber: { type: integer, minimum: 1 }
+    WorkoutSet:
+      type: object
+      required: [id, exercise, setNumber, totalSets, reps, percentage, weight, status, attemptNumber]
+      properties:
+        id: { type: integer }
+        exercise: { $ref: "#/components/schemas/ExerciseName" }
+        setNumber: { type: integer }
+        totalSets: { type: integer }
+        reps: { type: integer }
+        percentage: { type: number }
+        weight: { type: number }
+        status:
+          type: string
+          enum: [pending, completed, missed, skipped]
+        attemptNumber: { type: integer }
+        completedAt: { type: ["string", "null"], format: date-time }
+    Workout:
+      type: object
+      required: [id, programmeId, programmeName, sessionNumber, sessionName, status, startedAt, completedSets, missedSets, attempts, sets]
+      properties:
+        id: { type: integer }
+        programmeId: { type: integer }
+        programmeName: { type: string }
+        sessionNumber: { type: integer }
+        sessionName: { type: string }
+        status:
+          type: string
+          enum: [in_progress, completed]
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: ["string", "null"], format: date-time }
+        completedSets: { type: integer }
+        missedSets: { type: integer }
+        attempts: { type: integer }
+        sets:
+          type: array
+          items: { $ref: "#/components/schemas/WorkoutSet" }
+    WorkoutSummary:
+      type: object
+      required: [id, sessionName, programmeName, date, completedSets, totalSets, missedSets, attempts]
+      properties:
+        id: { type: integer }
+        sessionName: { type: string }
+        programmeName: { type: string }
+        date: { type: string, format: date-time }
+        completedSets: { type: integer }
+        totalSets: { type: integer }
+        missedSets: { type: integer }
+        attempts: { type: integer }
+    Dashboard:
+      type: object
+      required: [profile, programme, nextSession, recentWorkouts, weeklyCompletedSets]
+      properties:
+        profile:
+          anyOf:
+            - $ref: "#/components/schemas/AthleteProfile"
+            - type: "null"
+        programme:
+          anyOf:
+            - $ref: "#/components/schemas/ProgrammeSummary"
+            - type: "null"
+        nextSession:
+          anyOf:
+            - $ref: "#/components/schemas/ProgrammeSession"
+            - type: "null"
+        recentWorkouts:
+          type: array
+          items: { $ref: "#/components/schemas/WorkoutSummary" }
+        weeklyCompletedSets: { type: integer }
+    MissSetInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [retry, move_on]
 
