@@ -268,7 +268,7 @@ components:
         - status
     AthleteProfile:
       type: object
-      required: [id, name, snatchPb, cleanJerkPb, backSquatPb, frontSquatPb, roundingIncrement]
+      required: [id, name, snatchPb, cleanJerkPb, backSquatPb, frontSquatPb, roundingIncrement, updatedAt]
       properties:
         id: { type: integer }
         name: { type: string }
@@ -279,6 +279,7 @@ components:
         roundingIncrement:
           type: number
           enum: [1, 2, 2.5]
+        updatedAt: { type: string, nullable: true }
     AthleteProfileInput:
       type: object
       required: [name, snatchPb, cleanJerkPb, backSquatPb, frontSquatPb, roundingIncrement]

@@ -15,4 +15,5 @@ export interface AthleteProfile {
   backSquatPb: number;
   frontSquatPb: number;
   roundingIncrement: AthleteProfileRoundingIncrement;
+  updatedAt: string | null;
 }

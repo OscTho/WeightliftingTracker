@@ -56,6 +56,7 @@ function profileResponse(row: typeof athleteProfilesTable.$inferSelect): Profile
     backSquatPb: asNumber(row.backSquatPb),
     frontSquatPb: asNumber(row.frontSquatPb),
     roundingIncrement: asNumber(row.roundingIncrement) as 1 | 2 | 2.5,
+    updatedAt: row.updatedAt ? (row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt)) : null,
   };
 }
 

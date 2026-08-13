@@ -27,7 +27,8 @@ export const GetProfileResponse = zod.object({
   "cleanJerkPb": zod.number(),
   "backSquatPb": zod.number(),
   "frontSquatPb": zod.number(),
-  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)])
+  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)]),
+  "updatedAt": zod.string().nullable()
 })
 
 
@@ -61,7 +62,8 @@ export const SaveProfileResponse = zod.object({
   "cleanJerkPb": zod.number(),
   "backSquatPb": zod.number(),
   "frontSquatPb": zod.number(),
-  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)])
+  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)]),
+  "updatedAt": zod.string().nullable()
 })
 
 
@@ -277,7 +279,8 @@ export const GetDashboardResponse = zod.object({
   "cleanJerkPb": zod.number(),
   "backSquatPb": zod.number(),
   "frontSquatPb": zod.number(),
-  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)])
+  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)]),
+  "updatedAt": zod.string().nullable()
 }),zod.null()]),
   "programme": zod.union([zod.object({
   "id": zod.number().int(),

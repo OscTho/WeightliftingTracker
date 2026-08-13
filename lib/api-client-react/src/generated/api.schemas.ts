@@ -26,6 +26,7 @@ export interface AthleteProfile {
   backSquatPb: number;
   frontSquatPb: number;
   roundingIncrement: AthleteProfileRoundingIncrement;
+  updatedAt: string | null;
 }
 
 export type AthleteProfileInputRoundingIncrement = typeof AthleteProfileInputRoundingIncrement[keyof typeof AthleteProfileInputRoundingIncrement];
