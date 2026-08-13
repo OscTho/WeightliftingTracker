@@ -86,13 +86,153 @@ export function ProgrammeDetailPage() {
 }
 
 export function WorkoutPage() {
-  const params = useParams<{ id: string }>(); const id = Number(params.id); const q = useGetWorkout(id, { query: { queryKey: getGetWorkoutQueryKey(id), enabled: Number.isFinite(id) } }); const [, setLocation] = useLocation(); const qc = useQueryClient(); const complete = useCompleteSet(); const miss = useMissSet(); const finish = useFinishWorkout(); const [showMiss, setShowMiss] = useState(false);
-  if (q.isLoading) return <LoadingBlock />; if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />; const w = q.data; const current = w.sets.find((s) => s.status === 'pending'); const done = (next: typeof w) => { qc.setQueryData(getGetWorkoutQueryKey(w.id), next); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); };
-  if (w.status === 'completed') return <div className="text-center"><div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary"><Check size={38} /></div><p className="font-data text-xs uppercase tracking-widest text-primary">Session logged</p><h1 className="mt-2 font-display text-6xl font-bold uppercase">{w.sessionName}</h1><p className="mt-3 text-muted-foreground">{w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts</p><div className="mt-8 flex flex-col gap-3"><Link href="/" className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground" data-testid="link-finished-home">Back to today</Link><Link href="/history" className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold" data-testid="link-finished-history">View history</Link></div></div>;
-  const completeCurrent = () => current && complete.mutate({ workoutId: w.id, setId: current.id }, { onSuccess: done });
-  const missCurrent = (action: 'retry' | 'move_on') => { if (current) miss.mutate({ workoutId: w.id, setId: current.id, data: { action } }, { onSuccess: (next) => { done(next); setShowMiss(false); } }); };
-  const progress = w.sets.length ? Math.round(((w.completedSets + w.missedSets) / w.sets.length) * 100) : 0;
-  return <div><div className="mb-6 flex items-start justify-between"><div><Link href="/" className="font-data text-[10px] uppercase tracking-widest text-muted-foreground" data-testid="link-workout-exit">Exit workout</Link><p className="mt-3 font-data text-[10px] uppercase tracking-widest text-primary">{w.programmeName}</p><h1 className="font-display text-5xl font-bold uppercase leading-none">{w.sessionName}</h1></div><div className="text-right"><p className="font-data text-2xl font-bold">{w.completedSets}/{w.sets.length}</p><p className="text-[10px] uppercase tracking-widest text-muted-foreground">sets</p></div></div><div className="mb-8 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full bg-secondary transition-all duration-300" style={{ width: `${progress}%` }} /></div>{current ? <section className="relative overflow-hidden rounded-xl bg-accent p-6 text-accent-foreground"><div className="absolute right-5 top-2 font-display text-[8rem] font-bold leading-none opacity-10">{String(current.setNumber).padStart(2, '0')}</div><div className="relative"><p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Current set · {current.setNumber} of {current.totalSets}</p><h2 className="mt-5 font-display text-6xl font-bold uppercase leading-[.8]">{exerciseLabels[current.exercise]}</h2><div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-3"><div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Load</p><p className="font-display text-6xl font-bold text-secondary">{current.weight}<span className="ml-2 text-2xl">kg</span></p></div><div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Reps</p><p className="font-display text-5xl font-bold">{current.reps}</p></div><div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Target</p><p className="font-display text-5xl font-bold">{current.percentage}%</p></div></div><div className="mt-9 grid gap-3"><Button onClick={completeCurrent} disabled={complete.isPending} className="min-h-16 bg-secondary text-lg text-secondary-foreground" data-testid="button-complete-set"><Check size={21} /> {complete.isPending ? 'Logging…' : 'Complete set'}</Button><Button onClick={() => setShowMiss(true)} className="min-h-16 border border-accent-foreground/30 bg-accent-foreground/10 text-accent-foreground" data-testid="button-miss-set"><CircleAlert size={19} /> Missed it</Button></div></div></section> : <div className="rounded-xl border border-secondary bg-secondary/15 p-7 text-center"><Check className="mx-auto mb-3" /><h2 className="font-display text-4xl font-bold uppercase">All sets accounted for</h2><Button onClick={() => finish.mutate({ workoutId: w.id }, { onSuccess: (next) => { done(next); qc.invalidateQueries({ queryKey: getGetHistoryQueryKey() }); } })} disabled={finish.isPending} className="mt-5 bg-primary text-primary-foreground" data-testid="button-finish-workout">{finish.isPending ? 'Finishing…' : 'Finish workout'} <ArrowRight size={17} /></Button></div>}{showMiss && current && <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/45 p-4"><div className="w-full rounded-xl border border-border bg-card p-6 shadow-2xl"><div className="flex items-start justify-between"><div><p className="font-data text-[10px] uppercase tracking-widest text-primary">Set {current.setNumber} · {exerciseLabels[current.exercise]}</p><h2 className="mt-1 font-display text-4xl font-bold uppercase">Choose your next move</h2></div><button onClick={() => setShowMiss(false)} data-testid="button-close-missed"><X /></button></div><p className="mt-3 text-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p><div className="mt-6 grid gap-3"><Button onClick={() => missCurrent('retry')} disabled={miss.isPending} className="justify-between border border-border bg-background" data-testid="button-retry-set"><span><span className="block text-left">Retry this set</span><span className="block text-left text-xs font-normal text-muted-foreground">Take a breath and make another attempt</span></span><ArrowRight size={17} /></Button><Button onClick={() => missCurrent('move_on')} disabled={miss.isPending} className="justify-between bg-primary text-primary-foreground" data-testid="button-move-on"><span><span className="block text-left">Move on</span><span className="block text-left text-xs font-normal text-primary-foreground/70">Log it and continue the session</span></span><ArrowRight size={17} /></Button></div></div></div>}</div>;
+  const params = useParams<{ id: string }>();
+  const id = Number(params.id);
+  const q = useGetWorkout(id, { query: { queryKey: getGetWorkoutQueryKey(id), enabled: Number.isFinite(id) } });
+  const [, setLocation] = useLocation();
+  const qc = useQueryClient();
+  const complete = useCompleteSet();
+  const miss = useMissSet();
+  const finish = useFinishWorkout();
+  const [showMiss, setShowMiss] = useState(false);
+  const [finishedExercise, setFinishedExercise] = useState<string | null>(null);
+
+  if (q.isLoading) return <LoadingBlock />;
+  if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />;
+  const w = q.data;
+  const current = w.sets.find((s) => s.status === 'pending');
+  const done = (next: typeof w) => { qc.setQueryData(getGetWorkoutQueryKey(w.id), next); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); };
+
+  if (w.status === 'completed') return (
+    <div className="text-center">
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary"><Check size={38} /></div>
+      <p className="font-data text-xs uppercase tracking-widest text-primary">Session logged</p>
+      <h1 className="mt-2 font-display text-6xl font-bold uppercase">{w.sessionName}</h1>
+      <p className="mt-3 text-muted-foreground">{w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts</p>
+      <div className="mt-8 flex flex-col gap-3">
+        <Link href="/" className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground" data-testid="link-finished-home">Back to today</Link>
+        <Link href="/history" className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold" data-testid="link-finished-history">View history</Link>
+      </div>
+    </div>
+  );
+
+  const completeCurrent = () => {
+    if (!current) return;
+    const isLastSetOfExercise = current.setNumber === current.totalSets;
+    complete.mutate({ workoutId: w.id, setId: current.id }, {
+      onSuccess: (next) => {
+        done(next);
+        if (isLastSetOfExercise) setFinishedExercise(exerciseLabels[current.exercise]);
+      },
+    });
+  };
+  const missCurrent = (action: 'retry' | 'move_on') => {
+    if (current) miss.mutate({ workoutId: w.id, setId: current.id, data: { action } }, { onSuccess: (next) => { done(next); setShowMiss(false); } });
+  };
+
+  // Per-exercise progress
+  const exerciseProgress = current
+    ? Math.round(((current.setNumber - 1) / current.totalSets) * 100)
+    : 100;
+  const nextExercise = current
+    ? (() => { const nextPending = w.sets.find((s) => s.status === 'pending' && s.id !== current.id); return nextPending && nextPending.exercise !== current.exercise ? exerciseLabels[nextPending.exercise] : null; })()
+    : null;
+
+  return (
+    <div>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <Link href="/" className="font-data text-[10px] uppercase tracking-widest text-muted-foreground" data-testid="link-workout-exit">Exit workout</Link>
+          <p className="mt-3 font-data text-[10px] uppercase tracking-widest text-primary">{w.programmeName}</p>
+          <h1 className="font-display text-5xl font-bold uppercase leading-none">{w.sessionName}</h1>
+        </div>
+        <div className="text-right">
+          <p className="font-data text-2xl font-bold">{w.completedSets}/{w.sets.length}</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">reps</p>
+        </div>
+      </div>
+
+      {/* Per-exercise progress bar */}
+      {current && (
+        <div className="mb-8">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">{exerciseLabels[current.exercise]}</p>
+            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">Rep {current.setNumber} / {current.totalSets}</p>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-full bg-secondary transition-all duration-300" style={{ width: `${exerciseProgress}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* Exercise complete interstitial */}
+      {finishedExercise ? (
+        <div className="rounded-xl border-2 border-secondary bg-secondary/15 p-8 text-center animate-in fade-in duration-300">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+            <Check size={30} className="text-secondary-foreground" />
+          </div>
+          <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Exercise complete</p>
+          <h2 className="mt-2 font-display text-5xl font-bold uppercase leading-tight">{finishedExercise}</h2>
+          {nextExercise && <p className="mt-3 text-sm text-muted-foreground">Next up: <span className="font-bold text-foreground">{nextExercise}</span></p>}
+          <Button onClick={() => setFinishedExercise(null)} className="mt-6 min-h-14 w-full bg-primary text-primary-foreground" data-testid="button-next-exercise">
+            {nextExercise ? <>Next exercise <ArrowRight size={17} /></> : <>Finish session <ArrowRight size={17} /></>}
+          </Button>
+        </div>
+      ) : current ? (
+        <section className="relative overflow-hidden rounded-xl bg-accent p-6 text-accent-foreground">
+          <div className="absolute right-5 top-2 font-display text-[8rem] font-bold leading-none opacity-10">{String(current.setNumber).padStart(2, '0')}</div>
+          <div className="relative">
+            <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Rep {current.setNumber} of {current.totalSets}</p>
+            <h2 className="mt-5 font-display text-6xl font-bold uppercase leading-[.8]">{exerciseLabels[current.exercise]}</h2>
+            <div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-3">
+              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Load</p><p className="font-display text-6xl font-bold text-secondary">{current.weight}<span className="ml-2 text-2xl">kg</span></p></div>
+              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Reps</p><p className="font-display text-5xl font-bold">{current.reps}</p></div>
+              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Target</p><p className="font-display text-5xl font-bold">{current.percentage}%</p></div>
+            </div>
+            <div className="mt-9 grid gap-3">
+              <Button onClick={completeCurrent} disabled={complete.isPending} className="min-h-16 bg-secondary text-lg text-secondary-foreground" data-testid="button-complete-set">
+                <Check size={21} /> {complete.isPending ? 'Logging…' : 'Complete rep'}
+              </Button>
+              <Button onClick={() => setShowMiss(true)} className="min-h-16 border border-accent-foreground/30 bg-accent-foreground/10 text-accent-foreground" data-testid="button-miss-set">
+                <CircleAlert size={19} /> Missed it
+              </Button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <div className="rounded-xl border border-secondary bg-secondary/15 p-7 text-center">
+          <Check className="mx-auto mb-3" />
+          <h2 className="font-display text-4xl font-bold uppercase">All reps accounted for</h2>
+          <Button onClick={() => finish.mutate({ workoutId: w.id }, { onSuccess: (next) => { done(next); qc.invalidateQueries({ queryKey: getGetHistoryQueryKey() }); } })} disabled={finish.isPending} className="mt-5 bg-primary text-primary-foreground" data-testid="button-finish-workout">
+            {finish.isPending ? 'Finishing…' : 'Finish workout'} <ArrowRight size={17} />
+          </Button>
+        </div>
+      )}
+
+      {showMiss && current && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/45 p-4">
+          <div className="w-full rounded-xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-data text-[10px] uppercase tracking-widest text-primary">Rep {current.setNumber} · {exerciseLabels[current.exercise]}</p>
+                <h2 className="mt-1 font-display text-4xl font-bold uppercase">Choose your next move</h2>
+              </div>
+              <button onClick={() => setShowMiss(false)} data-testid="button-close-missed"><X /></button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
+            <div className="mt-6 grid gap-3">
+              <Button onClick={() => missCurrent('retry')} disabled={miss.isPending} className="justify-between border border-border bg-background" data-testid="button-retry-set">
+                <span><span className="block text-left">Retry this rep</span><span className="block text-left text-xs font-normal text-muted-foreground">Take a breath and make another attempt</span></span><ArrowRight size={17} />
+              </Button>
+              <Button onClick={() => missCurrent('move_on')} disabled={miss.isPending} className="justify-between bg-primary text-primary-foreground" data-testid="button-move-on">
+                <span><span className="block text-left">Move on</span><span className="block text-left text-xs font-normal text-primary-foreground/70">Log it and continue the session</span></span><ArrowRight size={17} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function HistoryPage() {
