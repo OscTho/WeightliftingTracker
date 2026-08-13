@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+.continuous-log {
+  --bg: #eaddcf;
+  --ink: #1a1a1a;
+  --accent: #ff3300;
+  --accent-faded: rgba(255, 51, 0, 0.1);
+  --paper: #f4f0ea;
+  --border: #1a1a1a;
+  --muted: #737373;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.continuous-log * {
+  border-color: var(--border);
+}
+
+.continuous-log-display {
+  font-family: var(--font-display);
+}
+
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+.punch-hole {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--bg);
+  border: 2px solid var(--border);
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+.checkbox-custom {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  background-color: var(--paper);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s;
+}
+
+.checkbox-custom:checked {
+  background-color: var(--ink);
+}
+
+.checkbox-custom:checked::after {
+  content: '✕';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.checkbox-custom.missed {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox-custom.missed::after {
+  content: '−';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Custom scrollbar for timeline */
+.continuous-log ::-webkit-scrollbar {
+  width: 8px;
+}
+.continuous-log ::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-left: 2px solid var(--border);
+}
+.continuous-log ::-webkit-scrollbar-thumb {
+  background: var(--ink);
+}
