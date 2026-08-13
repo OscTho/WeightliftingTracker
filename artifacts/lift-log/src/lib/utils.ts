@@ -23,6 +23,7 @@ export const formatShortDate = (value?: string | null) =>
 export const emptyProgramme: ProgrammeInput = {
   name: 'Foundation cycle',
   sessionsPerWeek: 3,
+  lengthWeeks: 4,
   sessions: [
     { sessionNumber: 1, name: 'Power & positions', exercises: [{ exercise: 'snatch', sets: 4, reps: 2, percentage: 72 }, { exercise: 'back_squat', sets: 4, reps: 3, percentage: 78 }] },
   ],

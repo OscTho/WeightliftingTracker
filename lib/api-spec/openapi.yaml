@@ -315,10 +315,11 @@ components:
           items: { $ref: "#/components/schemas/ProgrammeExerciseInput" }
     ProgrammeInput:
       type: object
-      required: [name, sessionsPerWeek, sessions]
+      required: [name, sessionsPerWeek, lengthWeeks, sessions]
       properties:
         name: { type: string, minLength: 1 }
         sessionsPerWeek: { type: integer, minimum: 1, maximum: 14 }
+        lengthWeeks: { type: integer, minimum: 1, maximum: 52 }
         sessions:
           type: array
           minItems: 1
@@ -343,11 +344,12 @@ components:
           items: { $ref: "#/components/schemas/ProgrammeExercise" }
     Programme:
       type: object
-      required: [id, name, sessionsPerWeek, sessions, createdAt, updatedAt]
+      required: [id, name, sessionsPerWeek, lengthWeeks, sessions, createdAt, updatedAt]
       properties:
         id: { type: integer }
         name: { type: string }
         sessionsPerWeek: { type: integer }
+        lengthWeeks: { type: integer }
         sessions:
           type: array
           items: { $ref: "#/components/schemas/ProgrammeSession" }
@@ -355,11 +357,12 @@ components:
         updatedAt: { type: string, format: date-time }
     ProgrammeSummary:
       type: object
-      required: [id, name, sessionsPerWeek, sessionNames, updatedAt]
+      required: [id, name, sessionsPerWeek, lengthWeeks, sessionNames, updatedAt]
       properties:
         id: { type: integer }
         name: { type: string }
         sessionsPerWeek: { type: integer }
+        lengthWeeks: { type: integer }
         sessionNames:
           type: array
           items: { type: string }

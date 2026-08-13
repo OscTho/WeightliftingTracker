@@ -10,6 +10,7 @@ export interface ProgrammeSummary {
   id: number;
   name: string;
   sessionsPerWeek: number;
+  lengthWeeks: number;
   sessionNames: string[];
   updatedAt: Date;
 }

@@ -74,6 +74,7 @@ export const GetProgrammesResponseItem = zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
   "sessionNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 })
@@ -85,6 +86,8 @@ export const GetProgrammesResponse = zod.array(GetProgrammesResponseItem)
  */
 
 export const createProgrammeBodySessionsPerWeekMax = 14;
+
+export const createProgrammeBodyLengthWeeksMax = 52;
 
 
 
@@ -101,6 +104,7 @@ export const createProgrammeBodySessionsItemExercisesItemPercentageMax = 150;
 export const CreateProgrammeBody = zod.object({
   "name": zod.string().min(1),
   "sessionsPerWeek": zod.number().int().min(1).max(createProgrammeBodySessionsPerWeekMax),
+  "lengthWeeks": zod.number().int().min(1).max(createProgrammeBodyLengthWeeksMax),
   "sessions": zod.array(zod.object({
   "sessionNumber": zod.number().int().min(1),
   "name": zod.string().min(1),
@@ -125,6 +129,7 @@ export const CreateProgrammeResponse = zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
   "sessions": zod.array(zod.object({
   "id": zod.number().int(),
   "sessionNumber": zod.number().int(),
@@ -163,6 +168,7 @@ export const GetProgrammeResponse = zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
   "sessions": zod.array(zod.object({
   "id": zod.number().int(),
   "sessionNumber": zod.number().int(),
@@ -192,6 +198,8 @@ export const UpdateProgrammeParams = zod.object({
 
 export const updateProgrammeBodySessionsPerWeekMax = 14;
 
+export const updateProgrammeBodyLengthWeeksMax = 52;
+
 
 
 export const updateProgrammeBodySessionsItemExercisesItemSetsMax = 30;
@@ -207,6 +215,7 @@ export const updateProgrammeBodySessionsItemExercisesItemPercentageMax = 150;
 export const UpdateProgrammeBody = zod.object({
   "name": zod.string().min(1),
   "sessionsPerWeek": zod.number().int().min(1).max(updateProgrammeBodySessionsPerWeekMax),
+  "lengthWeeks": zod.number().int().min(1).max(updateProgrammeBodyLengthWeeksMax),
   "sessions": zod.array(zod.object({
   "sessionNumber": zod.number().int().min(1),
   "name": zod.string().min(1),
@@ -231,6 +240,7 @@ export const UpdateProgrammeResponse = zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
   "sessions": zod.array(zod.object({
   "id": zod.number().int(),
   "sessionNumber": zod.number().int(),
@@ -286,6 +296,7 @@ export const GetDashboardResponse = zod.object({
   "id": zod.number().int(),
   "name": zod.string(),
   "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
   "sessionNames": zod.array(zod.string()),
   "updatedAt": zod.coerce.date()
 }),zod.null()]),

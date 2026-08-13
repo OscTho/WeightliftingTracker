@@ -11,6 +11,7 @@ export interface Programme {
   id: number;
   name: string;
   sessionsPerWeek: number;
+  lengthWeeks: number;
   sessions: ProgrammeSession[];
   createdAt: Date;
   updatedAt: Date;

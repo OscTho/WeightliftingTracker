@@ -16,6 +16,7 @@ export const programmesTable = pgTable("programmes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   sessionsPerWeek: integer("sessions_per_week").notNull(),
+  lengthWeeks: integer("length_weeks").notNull().default(4),
   sessions: jsonb("sessions").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

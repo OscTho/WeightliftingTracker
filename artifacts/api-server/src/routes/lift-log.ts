@@ -75,6 +75,7 @@ function programmeResponse(row: typeof programmesTable.$inferSelect) {
     id: row.id,
     name: row.name,
     sessionsPerWeek: row.sessionsPerWeek,
+    lengthWeeks: row.lengthWeeks,
     sessions,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -87,6 +88,7 @@ function programmeSummary(row: typeof programmesTable.$inferSelect) {
     id: row.id,
     name: row.name,
     sessionsPerWeek: row.sessionsPerWeek,
+    lengthWeeks: row.lengthWeeks,
     sessionNames: sessions.map((session) => session.name),
     updatedAt: row.updatedAt,
   };
@@ -191,6 +193,7 @@ router.post("/programmes", async (req, res): Promise<void> => {
   const [row] = await db.insert(programmesTable).values({
     name: parsed.data.name,
     sessionsPerWeek: parsed.data.sessionsPerWeek,
+    lengthWeeks: parsed.data.lengthWeeks,
     sessions: parsed.data.sessions,
   }).returning();
   res.status(201).json(CreateProgrammeResponse.parse(programmeResponse(row)));
@@ -220,6 +223,7 @@ router.put("/programmes/:programmeId", async (req, res): Promise<void> => {
   const [row] = await db.update(programmesTable).set({
     name: body.data.name,
     sessionsPerWeek: body.data.sessionsPerWeek,
+    lengthWeeks: body.data.lengthWeeks,
     sessions: body.data.sessions,
     updatedAt: new Date(),
   }).where(eq(programmesTable.id, params.data.programmeId)).returning();

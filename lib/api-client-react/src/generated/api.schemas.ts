@@ -98,6 +98,11 @@ export interface ProgrammeInput {
      * @maximum 14
      */
   sessionsPerWeek: number;
+  /**
+     * @minimum 1
+     * @maximum 52
+     */
+  lengthWeeks: number;
   /** @minItems 1 */
   sessions: ProgrammeSessionInput[];
 }
@@ -118,6 +123,7 @@ export interface Programme {
   id: number;
   name: string;
   sessionsPerWeek: number;
+  lengthWeeks: number;
   sessions: ProgrammeSession[];
   createdAt: string;
   updatedAt: string;
@@ -127,6 +133,7 @@ export interface ProgrammeSummary {
   id: number;
   name: string;
   sessionsPerWeek: number;
+  lengthWeeks: number;
   sessionNames: string[];
   updatedAt: string;
 }

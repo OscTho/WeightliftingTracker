@@ -15,6 +15,11 @@ export interface ProgrammeInput {
      * @maximum 14
      */
   sessionsPerWeek: number;
+  /**
+     * @minimum 1
+     * @maximum 52
+     */
+  lengthWeeks: number;
   /** @minItems 1 */
   sessions: ProgrammeSessionInput[];
 }
