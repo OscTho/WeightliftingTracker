@@ -1,25 +1,52 @@
-import { useEffect, useState, type ButtonHTMLAttributes } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Check, ChevronDown, ChevronUp, CircleAlert, Edit3, Flame, Plus, Save, Trash2, X } from 'lucide-react';
+import { ArrowRight, Check, CircleAlert, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 import {
-  getGetDashboardQueryKey, getGetHistoryQueryKey, getGetProgrammeQueryKey, getGetProgrammesQueryKey, getGetProfileQueryKey, getGetWorkoutQueryKey,
-  useCompleteSet, useCreateProgramme, useDeleteProgramme, useFinishWorkout, useGetDashboard, useGetHistory, useGetProgramme, useGetProgrammes, useGetProfile, useGetWorkout, useMissSet, useSaveProfile, useStartWorkout, useUpdateProgramme,
+  getGetDashboardQueryKey, getGetHistoryQueryKey, getGetProgrammeQueryKey,
+  getGetProgrammesQueryKey, getGetProfileQueryKey, getGetWorkoutQueryKey,
+  useCompleteSet, useCreateProgramme, useDeleteProgramme, useFinishWorkout,
+  useGetDashboard, useGetHistory, useGetProgramme, useGetProgrammes,
+  useGetProfile, useGetWorkout, useMissSet, useSaveProfile,
+  useStartWorkout, useUpdateProgramme,
 } from '@workspace/api-client-react';
 import type { AthleteProfileInput, ExerciseName, ProgrammeInput } from '@workspace/api-client-react';
 import { emptyProgramme, exerciseLabels, formatDate, formatShortDate } from '@/lib/utils';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/shell';
+import { Button } from '@/components/button';
+import { Input, Select } from '@/components/input';
+import { BottomSheet } from '@/components/sheet';
+import { WorkoutCurrentSet, ExerciseCompleteBanner, SetStatusBar } from '@/components/workout';
+import type { WorkoutSetStatus } from '@/components/workout';
 
-const Button = ({ children, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => <button className={`tap inline-flex min-h-12 items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold ${className}`} {...props}>{children}</button>;
-const Field = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted-foreground">{label}</span><input className="min-h-12 w-full rounded-lg border border-input bg-background px-4 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" {...props} /></label>;
 const exerciseOptions: ExerciseName[] = ['snatch', 'clean_and_jerk', 'back_squat', 'front_squat'];
 
 function PageHead({ eyebrow, title, detail }: { eyebrow: string; title: string; detail?: string }) {
-  return <div className="mb-8"><p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">{eyebrow}</p><h1 className="mt-1 font-display text-5xl font-bold uppercase leading-[.88] tracking-tight">{title}</h1>{detail && <p className="mt-3 text-sm text-muted-foreground">{detail}</p>}</div>;
+  return (
+    <div className="mb-8">
+      <p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">{eyebrow}</p>
+      <h1 className="mt-1 font-display text-5xl font-semibold uppercase leading-[.88] tracking-tight">{title}</h1>
+      {detail && <p className="mt-3 text-sm text-muted-foreground">{detail}</p>}
+    </div>
+  );
 }
+
 function StatsRow({ stats }: { stats: { label: string; value: string; accent?: boolean }[] }) {
-  return <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">{stats.map((s) => <div key={s.label} className={`bg-card p-4 ${s.accent ? 'border-t-2 border-secondary' : ''}`}><p className="font-data text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p><p className="mt-1 font-display text-3xl font-bold">{s.value}</p></div>)}</div>;
+  return (
+    <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
+      {stats.map((s) => (
+        <div key={s.label} className={`bg-card p-4 ${s.accent ? 'border-t-2 border-secondary' : ''}`}>
+          <p className="font-data text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
+          <p className="mt-1 font-display text-3xl font-semibold">{s.value}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
+
+// ─────────────────────────────────────────────────────────
+// Dashboard
+// ─────────────────────────────────────────────────────────
 
 export function DashboardPage() {
   const query = useGetDashboard();
@@ -27,63 +54,588 @@ export function DashboardPage() {
   if (query.isLoading) return <LoadingBlock />;
   if (query.isError || !query.data) return <ErrorBlock retry={() => query.refetch()} />;
   const d = query.data;
-  return <div className="animate-in fade-in duration-500">
-    <div className="mb-8"><p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">Today · {formatShortDate(new Date().toISOString())}</p><h1 className="mt-1 font-display text-5xl font-bold uppercase leading-[.88] tracking-tight">Ready when<br /><span className="text-primary">{d.profile ? d.profile.name.split(' ')[0] : 'you'} are.</span></h1></div>
-    {!d.profile && <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-secondary bg-secondary/20 p-4"><div><p className="font-bold">Set up your athlete profile</p><p className="text-sm text-muted-foreground">Your percentages need a starting point.</p></div><Link href="/profile" className="tap shrink-0 rounded-md bg-foreground px-3 py-3 text-xs font-bold text-background" data-testid="link-setup-profile">Set up <ArrowRight size={15} className="ml-1 inline" /></Link></div>}
-    <div className="space-y-4">
-      <section className="relative overflow-hidden rounded-xl bg-accent p-6 text-accent-foreground"><div className="absolute -right-5 -top-12 font-display text-[11rem] font-bold leading-none opacity-10">01</div><div className="relative"><p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Next session</p>{d.nextSession ? <><h2 className="mt-2 font-display text-5xl font-bold uppercase leading-[.86]">{d.nextSession.name}</h2><p className="mt-4 text-sm text-accent-foreground/70">{d.nextSession.exercises.length} movements · {d.nextSession.exercises.reduce((a, e) => a + e.sets, 0)} working sets</p><Button className="mt-7 bg-secondary text-secondary-foreground" onClick={() => d.programme && setLocation(`/workout/start?programme=${d.programme.id}&session=${d.nextSession?.sessionNumber}`)} data-testid="button-start-next">Start session <ArrowRight size={17} /></Button></> : <><h2 className="mt-2 font-display text-4xl font-bold uppercase">No session queued</h2><p className="mt-3 text-sm text-accent-foreground/70">Choose a programme and give the week a shape.</p><Link href="/programme" className="tap mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-secondary px-4 text-sm font-bold text-secondary-foreground" data-testid="link-choose-programme">Browse programmes <ArrowRight size={17} /></Link></>}</div></section>
-      <StatsRow stats={[{ label: 'Sets this week', value: String(d.weeklyCompletedSets), accent: true }, { label: 'Programme', value: d.programme ? `${d.programme.sessionsPerWeek}×` : '—' }, { label: 'Recent', value: String(d.recentWorkouts.length) }]} />
-      <section className="rounded-xl border border-border bg-card p-5"><div className="flex items-center justify-between"><p className="font-display text-2xl font-bold uppercase">Recent work</p><Link href="/history" className="text-xs font-bold uppercase tracking-wide text-primary" data-testid="link-see-history">See all</Link></div>{d.recentWorkouts.length ? <div className="mt-4 space-y-3">{d.recentWorkouts.slice(0, 3).map((w) => <div key={w.id} className="flex items-center justify-between border-t border-border pt-3"><div><p className="font-bold">{w.sessionName}</p><p className="text-xs text-muted-foreground">{formatShortDate(w.date)}</p></div><span className="font-data text-xs">{w.completedSets}/{w.totalSets}</span></div>)}</div> : <p className="mt-4 text-sm text-muted-foreground">Your completed sessions will land here.</p>}</section>
+  return (
+    <div className="animate-in fade-in duration-500">
+      <div className="mb-8">
+        <p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">
+          Today · {formatShortDate(new Date().toISOString())}
+        </p>
+        <h1 className="mt-1 font-display text-5xl font-semibold uppercase leading-[.88] tracking-tight">
+          Ready when<br />
+          <span className="text-primary">{d.profile ? d.profile.name.split(' ')[0] : 'you'} are.</span>
+        </h1>
+      </div>
+
+      {!d.profile && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-secondary bg-secondary/15 p-4">
+          <div>
+            <p className="font-semibold">Set up your athlete profile</p>
+            <p className="text-sm text-muted-foreground">Your percentages need a starting point.</p>
+          </div>
+          <Link
+            href="/profile"
+            className="tap shrink-0 rounded-lg bg-foreground px-3 py-2.5 text-xs font-semibold text-background"
+            data-testid="link-setup-profile"
+          >
+            Set up <ArrowRight size={14} className="ml-1 inline" />
+          </Link>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {/* Next session card */}
+        <section className="relative overflow-hidden rounded-xl bg-elevated p-6 text-foreground">
+          <div className="absolute -right-4 -top-10 font-display text-[10rem] font-semibold leading-none opacity-[0.05]">01</div>
+          <div className="relative">
+            <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Next session</p>
+            {d.nextSession ? (
+              <>
+                <h2 className="mt-2 font-display text-5xl font-semibold uppercase leading-[.86]">{d.nextSession.name}</h2>
+                <p className="mt-4 text-sm text-foreground/60">
+                  {d.nextSession.exercises.length} movements · {d.nextSession.exercises.reduce((a, e) => a + e.sets, 0)} working sets
+                </p>
+                <Button
+                  variant="secondary"
+                  className="mt-7"
+                  onClick={() => d.programme && setLocation(`/workout/start?programme=${d.programme.id}&session=${d.nextSession?.sessionNumber}`)}
+                  data-testid="button-start-next"
+                >
+                  Start session <ArrowRight size={17} />
+                </Button>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-2 font-display text-4xl font-semibold uppercase">No session queued</h2>
+                <p className="mt-3 text-sm text-foreground/60">Choose a programme and give the week a shape.</p>
+                <Link
+                  href="/programme"
+                  className="tap mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground"
+                  data-testid="link-choose-programme"
+                >
+                  Browse programmes <ArrowRight size={17} />
+                </Link>
+              </>
+            )}
+          </div>
+        </section>
+
+        <StatsRow stats={[
+          { label: 'Sets this week', value: String(d.weeklyCompletedSets), accent: true },
+          { label: 'Programme',      value: d.programme ? `${d.programme.sessionsPerWeek}×` : '—' },
+          { label: 'Recent',         value: String(d.recentWorkouts.length) },
+        ]} />
+
+        {/* Recent work */}
+        <section className="rounded-xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-2xl font-semibold uppercase">Recent work</p>
+            <Link href="/history" className="text-xs font-semibold uppercase tracking-wide text-primary" data-testid="link-see-history">
+              See all
+            </Link>
+          </div>
+          {d.recentWorkouts.length ? (
+            <div className="mt-4 space-y-3">
+              {d.recentWorkouts.slice(0, 3).map((w) => (
+                <div key={w.id} className="flex items-center justify-between border-t border-border pt-3">
+                  <div>
+                    <p className="font-semibold">{w.sessionName}</p>
+                    <p className="text-xs text-muted-foreground">{formatShortDate(w.date)}</p>
+                  </div>
+                  <span className="font-data text-xs">{w.completedSets}/{w.totalSets}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">Your completed sessions will land here.</p>
+          )}
+        </section>
+      </div>
     </div>
-  </div>;
+  );
 }
+
+// ─────────────────────────────────────────────────────────
+// Profile
+// ─────────────────────────────────────────────────────────
 
 export function ProfilePage() {
   const { data, isLoading } = useGetProfile({ query: { retry: false, queryKey: getGetProfileQueryKey() } });
   const save = useSaveProfile();
   const qc = useQueryClient();
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState<AthleteProfileInput>({ name: '', snatchPb: 0, cleanJerkPb: 0, backSquatPb: 0, frontSquatPb: 0, roundingIncrement: 2.5 });
-  useEffect(() => { if (data) setForm({ name: data.name, snatchPb: data.snatchPb, cleanJerkPb: data.cleanJerkPb, backSquatPb: data.backSquatPb, frontSquatPb: data.frontSquatPb, roundingIncrement: data.roundingIncrement }); }, [data]);
+  const [form, setForm] = useState<AthleteProfileInput>({
+    name: '', snatchPb: 0, cleanJerkPb: 0, backSquatPb: 0, frontSquatPb: 0, roundingIncrement: 2.5,
+  });
+  useEffect(() => {
+    if (data) setForm({ name: data.name, snatchPb: data.snatchPb, cleanJerkPb: data.cleanJerkPb, backSquatPb: data.backSquatPb, frontSquatPb: data.frontSquatPb, roundingIncrement: data.roundingIncrement });
+  }, [data]);
   if (isLoading) return <LoadingBlock />;
-  const update = (key: keyof AthleteProfileInput, value: string) => setForm((f) => ({ ...f, [key]: key === 'name' ? value : Number(value) }));
-  return <div><PageHead eyebrow="Profile" title="Your numbers." detail="Keep your reference lifts close. Lofte uses them to turn percentages into weights you can load." />{data?.updatedAt && <p className="font-data text-[11px] uppercase tracking-widest text-muted-foreground -mt-5 mb-8">Last updated · {new Date(data.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(data.updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>}<form onSubmit={(e) => { e.preventDefault(); save.mutate({ data: form }, { onSuccess: (p) => { qc.setQueryData(getGetProfileQueryKey(), p); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); setSaved(true); setTimeout(() => setSaved(false), 2500); } }); }} className="space-y-6">
-    <section className="rounded-xl border border-border bg-card p-5"><div className="mb-6 flex items-center justify-between"><div><h2 className="font-display text-3xl font-bold uppercase">Athlete</h2><p className="text-sm text-muted-foreground">The person behind the bar.</p></div><div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary font-display text-xl font-bold">{form.name ? form.name.split(' ').map((n) => n[0]).join('').slice(0, 2) : 'LL'}</div></div><Field label="Name" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Your name" required /></section>
-    <section className="rounded-xl border border-border bg-card p-5"><h2 className="font-display text-3xl font-bold uppercase">Personal bests</h2><p className="mb-6 text-sm text-muted-foreground">In kilograms. Be honest; useful beats impressive.</p><div className="grid grid-cols-2 gap-4">{([['snatchPb', 'Snatch'], ['cleanJerkPb', 'Clean & jerk'], ['backSquatPb', 'Back squat'], ['frontSquatPb', 'Front squat']] as const).map(([key, label]) => <Field key={key} label={`${label} · kg`} type="number" min="0" step="0.5" value={form[key] === 0 ? '' : form[key]} onChange={(e) => update(key, e.target.value)} data-testid={`input-${key}`} />)}</div></section>
-    <section className="rounded-xl border border-border bg-card p-5"><h2 className="font-display text-3xl font-bold uppercase">Loading maths</h2><p className="mb-5 text-sm text-muted-foreground">Round working weights to what your gym actually has.</p><div className="grid grid-cols-3 gap-2">{[1, 2, 2.5].map((n) => <button type="button" key={n} onClick={() => setForm((f) => ({ ...f, roundingIncrement: n as 1 | 2 | 2.5 }))} className={`tap min-h-14 rounded-lg border font-data text-sm ${form.roundingIncrement === n ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background'}`} data-testid={`button-rounding-${n}`}>{n} kg</button>)}</div></section>
-    <div className="flex items-center justify-between gap-4"><p className="text-sm">{saved ? <span className="font-bold text-accent">Profile saved.</span> : save.isError ? <span className="text-destructive">Could not save. Try again.</span> : null}</p><Button type="submit" disabled={save.isPending} className="bg-primary text-primary-foreground" data-testid="button-save-profile">{save.isPending ? 'Saving…' : <><Save size={17} /> Save profile</>}</Button></div>
-  </form></div>;
+
+  const update = (key: keyof AthleteProfileInput, value: string) =>
+    setForm((f) => ({ ...f, [key]: key === 'name' ? value : Number(value) }));
+
+  return (
+    <div>
+      <PageHead
+        eyebrow="Profile"
+        title="Your numbers."
+        detail="Keep your reference lifts close. Lofte uses them to turn percentages into weights you can load."
+      />
+      {data?.updatedAt && (
+        <p className="font-data text-[11px] uppercase tracking-widest text-muted-foreground -mt-5 mb-8">
+          Last updated · {new Date(data.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(data.updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+        </p>
+      )}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate({ data: form }, {
+            onSuccess: (p) => {
+              qc.setQueryData(getGetProfileQueryKey(), p);
+              qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+              setSaved(true);
+              setTimeout(() => setSaved(false), 2500);
+            },
+          });
+        }}
+        className="space-y-6"
+      >
+        {/* Athlete card */}
+        <section className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-3xl font-semibold uppercase">Athlete</h2>
+              <p className="text-sm text-muted-foreground">The person behind the bar.</p>
+            </div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary font-display text-xl font-semibold">
+              {form.name ? form.name.split(' ').map((n) => n[0]).join('').slice(0, 2) : 'LL'}
+            </div>
+          </div>
+          <Input
+            label="Name"
+            value={form.name}
+            onChange={(e) => update('name', e.target.value)}
+            placeholder="Your name"
+            required
+            data-testid="input-name"
+          />
+        </section>
+
+        {/* Personal bests */}
+        <section className="rounded-xl border border-border bg-card p-5">
+          <h2 className="font-display text-3xl font-semibold uppercase">Personal bests</h2>
+          <p className="mb-6 text-sm text-muted-foreground">In kilograms. Be honest; useful beats impressive.</p>
+          <div className="grid grid-cols-2 gap-4">
+            {([['snatchPb', 'Snatch'], ['cleanJerkPb', 'Clean & jerk'], ['backSquatPb', 'Back squat'], ['frontSquatPb', 'Front squat']] as const).map(([key, label]) => (
+              <Input
+                key={key}
+                label={`${label} · kg`}
+                type="number"
+                min="0"
+                step="0.5"
+                value={form[key] === 0 ? '' : form[key]}
+                onChange={(e) => update(key, e.target.value)}
+                data-testid={`input-${key}`}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Loading maths */}
+        <section className="rounded-xl border border-border bg-card p-5">
+          <h2 className="font-display text-3xl font-semibold uppercase">Loading maths</h2>
+          <p className="mb-5 text-sm text-muted-foreground">Round working weights to what your gym actually has.</p>
+          <div className="grid grid-cols-3 gap-2">
+            {([1, 2, 2.5] as const).map((n) => (
+              <Button
+                key={n}
+                type="button"
+                variant={form.roundingIncrement === n ? 'primary' : 'tertiary'}
+                className="w-full font-data"
+                onClick={() => setForm((f) => ({ ...f, roundingIncrement: n }))}
+                data-testid={`button-rounding-${n}`}
+              >
+                {n} kg
+              </Button>
+            ))}
+          </div>
+        </section>
+
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm">
+            {saved
+              ? <span className="font-semibold text-success">Profile saved.</span>
+              : save.isError
+              ? <span className="text-destructive">Could not save. Try again.</span>
+              : null}
+          </p>
+          <Button
+            type="submit"
+            variant="primary"
+            loading={save.isPending}
+            data-testid="button-save-profile"
+          >
+            <Save size={16} /> Save profile
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
 }
+
+// ─────────────────────────────────────────────────────────
+// Programme form
+// ─────────────────────────────────────────────────────────
 
 function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeInput; programmeId?: number; onDone: () => void }) {
   const [form, setForm] = useState<ProgrammeInput>(initial || emptyProgramme);
-  const create = useCreateProgramme(); const update = useUpdateProgramme(); const qc = useQueryClient();
+  const create = useCreateProgramme();
+  const update = useUpdateProgramme();
+  const qc = useQueryClient();
   const mutation = programmeId ? update : create;
-  const setSession = (index: number, patch: Partial<ProgrammeInput['sessions'][number]>) => setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === index ? { ...s, ...patch } : s) }));
-  const setExercise = (si: number, ei: number, patch: Partial<ProgrammeInput['sessions'][number]['exercises'][number]>) => setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === si ? { ...s, exercises: s.exercises.map((e, j) => j === ei ? { ...e, ...patch } : e) } : s) }));
-  return <form onSubmit={(e) => { e.preventDefault(); const done = () => { qc.invalidateQueries({ queryKey: getGetProgrammesQueryKey() }); if (programmeId) qc.invalidateQueries({ queryKey: getGetProgrammeQueryKey(programmeId) }); onDone(); }; programmeId ? update.mutate({ programmeId, data: form }, { onSuccess: done }) : create.mutate({ data: form }, { onSuccess: done }); }} className="space-y-5">
-    <Field label="Programme name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-    <div className="grid grid-cols-2 gap-4"><Field label="Sessions / week" type="number" min="1" max="14" value={form.sessionsPerWeek} onChange={(e) => setForm({ ...form, sessionsPerWeek: Number(e.target.value) })} required /><Field label="Length (weeks)" type="number" min="1" max="52" value={form.lengthWeeks} onChange={(e) => setForm({ ...form, lengthWeeks: Number(e.target.value) })} required /></div>
-    {form.sessions.map((session, si) => <div key={si} className="rounded-lg border border-border bg-background p-4"><div className="mb-4 space-y-3"><Field label="Week slot" type="number" min="1" value={session.sessionNumber} onChange={(e) => setSession(si, { sessionNumber: Number(e.target.value) })} /><Field label={`Session ${si + 1} name`} value={session.name} onChange={(e) => setSession(si, { name: e.target.value })} required /></div><div className="space-y-3">{session.exercises.map((ex, ei) => <div key={ei} className="rounded-lg border border-border bg-card/50 p-3"><label className="block"><span className="mb-2 block text-[9px] font-bold uppercase text-muted-foreground">Movement</span><select className="h-12 w-full rounded-lg border border-input bg-background px-3 text-sm" value={ex.exercise} onChange={(e) => setExercise(si, ei, { exercise: e.target.value as ExerciseName })}>{exerciseOptions.map((x) => <option key={x} value={x}>{exerciseLabels[x]}</option>)}</select></label><div className="mt-3 grid grid-cols-[1fr_1fr_1fr_38px] items-end gap-2"><Field label="Sets" type="number" min="1" value={ex.sets} onChange={(e) => setExercise(si, ei, { sets: Number(e.target.value) })} /><Field label="Reps" type="number" min="1" value={ex.reps} onChange={(e) => setExercise(si, ei, { reps: Number(e.target.value) })} /><Field label="% 1RM" type="number" min="1" value={ex.percentage} onChange={(e) => setExercise(si, ei, { percentage: Number(e.target.value) })} /><button type="button" onClick={() => setSession(si, { exercises: session.exercises.filter((_, j) => j !== ei) })} className="tap flex h-12 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive" data-testid={`button-remove-exercise-${si}-${ei}`}><Trash2 size={16} /></button></div></div>)}</div><button type="button" onClick={() => setSession(si, { exercises: [...session.exercises, { exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] })} className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary" data-testid={`button-add-exercise-${si}`}><Plus size={15} /> Add movement</button></div>)}
-    <div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={() => setForm((f) => ({ ...f, sessions: [...f.sessions, { sessionNumber: f.sessions.length + 1, name: `Session ${f.sessions.length + 1}`, exercises: [{ exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] }] }))} className="border border-border bg-card" data-testid="button-add-session"><Plus size={16} /> Add session</Button><Button type="submit" disabled={mutation.isPending} className="bg-primary text-primary-foreground" data-testid="button-save-programme">{mutation.isPending ? 'Saving…' : <><Save size={16} /> Save programme</>}</Button></div>
-  </form>;
+
+  const setSession = (index: number, patch: Partial<ProgrammeInput['sessions'][number]>) =>
+    setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === index ? { ...s, ...patch } : s) }));
+
+  const setExercise = (si: number, ei: number, patch: Partial<ProgrammeInput['sessions'][number]['exercises'][number]>) =>
+    setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === si ? { ...s, exercises: s.exercises.map((e, j) => j === ei ? { ...e, ...patch } : e) } : s) }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const done = () => {
+      qc.invalidateQueries({ queryKey: getGetProgrammesQueryKey() });
+      if (programmeId) qc.invalidateQueries({ queryKey: getGetProgrammeQueryKey(programmeId) });
+      onDone();
+    };
+    programmeId
+      ? update.mutate({ programmeId, data: form }, { onSuccess: done })
+      : create.mutate({ data: form }, { onSuccess: done });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Input
+        label="Programme name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        required
+      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Sessions / week"
+          type="number" min="1" max="14"
+          value={form.sessionsPerWeek}
+          onChange={(e) => setForm({ ...form, sessionsPerWeek: Number(e.target.value) })}
+          required
+        />
+        <Input
+          label="Length (weeks)"
+          type="number" min="1" max="52"
+          value={form.lengthWeeks}
+          onChange={(e) => setForm({ ...form, lengthWeeks: Number(e.target.value) })}
+          required
+        />
+      </div>
+
+      {form.sessions.map((session, si) => (
+        <div key={si} className="rounded-lg border border-border bg-background p-4">
+          <div className="mb-4 space-y-3">
+            <Input
+              label="Week slot"
+              type="number" min="1"
+              value={session.sessionNumber}
+              onChange={(e) => setSession(si, { sessionNumber: Number(e.target.value) })}
+            />
+            <Input
+              label={`Session ${si + 1} name`}
+              value={session.name}
+              onChange={(e) => setSession(si, { name: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            {session.exercises.map((ex, ei) => (
+              <div key={ei} className="rounded-lg border border-border bg-card/50 p-3">
+                <Select
+                  label="Movement"
+                  value={ex.exercise}
+                  onChange={(e) => setExercise(si, ei, { exercise: e.target.value as ExerciseName })}
+                  options={exerciseOptions.map((x) => ({ value: x, label: exerciseLabels[x] }))}
+                />
+                <div className="mt-3 grid grid-cols-[1fr_1fr_1fr_38px] items-end gap-2">
+                  <Input
+                    label="Sets"
+                    type="number" min="1"
+                    value={ex.sets}
+                    onChange={(e) => setExercise(si, ei, { sets: Number(e.target.value) })}
+                  />
+                  <Input
+                    label="Reps"
+                    type="number" min="1"
+                    value={ex.reps}
+                    onChange={(e) => setExercise(si, ei, { reps: Number(e.target.value) })}
+                  />
+                  <Input
+                    label="% 1RM"
+                    type="number" min="1"
+                    value={ex.percentage}
+                    onChange={(e) => setExercise(si, ei, { percentage: Number(e.target.value) })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setSession(si, { exercises: session.exercises.filter((_, j) => j !== ei) })}
+                    className="tap flex h-12 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    data-testid={`button-remove-exercise-${si}-${ei}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSession(si, { exercises: [...session.exercises, { exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] })}
+            className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
+            data-testid={`button-add-exercise-${si}`}
+          >
+            <Plus size={14} /> Add movement
+          </button>
+        </div>
+      ))}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          variant="tertiary"
+          onClick={() => setForm((f) => ({ ...f, sessions: [...f.sessions, { sessionNumber: f.sessions.length + 1, name: `Session ${f.sessions.length + 1}`, exercises: [{ exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] }] }))}
+          data-testid="button-add-session"
+        >
+          <Plus size={16} /> Add session
+        </Button>
+        <Button
+          type="submit"
+          variant="primary"
+          loading={mutation.isPending}
+          data-testid="button-save-programme"
+        >
+          <Save size={16} /> Save programme
+        </Button>
+      </div>
+    </form>
+  );
 }
+
+// ─────────────────────────────────────────────────────────
+// Programme list
+// ─────────────────────────────────────────────────────────
 
 export function ProgrammePage() {
   const { data, isLoading, isError, refetch } = useGetProgrammes();
   const [editing, setEditing] = useState(false);
   const [location, setLocation] = useLocation();
-  const del = useDeleteProgramme(); const qc = useQueryClient();
+  const del = useDeleteProgramme();
+  const qc = useQueryClient();
+
   if (isLoading) return <LoadingBlock />;
-  if (isError) return <ErrorBlock retry={() => refetch()} />;
-  return <div><PageHead eyebrow="Training plans" title="Programme room." detail="A good week removes decisions from the moment you need to make them." /><div className="mb-7 flex justify-end"><Button onClick={() => setEditing((v) => !v)} className="bg-primary text-primary-foreground" data-testid="button-new-programme"><Plus size={18} /> New programme</Button></div>{editing && <section className="mb-7 rounded-xl border-2 border-primary/30 bg-card p-5"><div className="mb-5 flex items-start justify-between"><div><p className="font-data text-[10px] uppercase tracking-widest text-primary">Build a week</p><h2 className="font-display text-3xl font-bold uppercase">New programme</h2></div><button onClick={() => setEditing(false)} data-testid="button-close-programme-form"><X /></button></div><ProgrammeForm onDone={() => setEditing(false)} /></section>}{data?.length ? <div className="space-y-4">{data.map((p) => <article key={p.id} className="rounded-xl border border-border bg-card p-5" data-testid={`card-programme-${p.id}`}><div className="flex items-start justify-between"><div><p className="font-data text-[10px] uppercase tracking-widest text-primary">Weekly cycle</p><h2 className="mt-1 font-display text-4xl font-bold uppercase">{p.name}</h2></div><Link href={`/programme/${p.id}`} className="tap flex h-10 w-10 items-center justify-center rounded-full bg-muted" data-testid={`link-programme-${p.id}`}><ArrowRight size={18} /></Link></div><div className="mt-6 flex items-end justify-between border-t border-border pt-4"><div className="flex gap-5"><div><p className="font-data text-2xl font-bold">{p.sessionsPerWeek}×</p><p className="text-xs text-muted-foreground">per week</p></div><div><p className="font-data text-2xl font-bold">{p.lengthWeeks}w</p><p className="text-xs text-muted-foreground">length</p></div></div><div className="text-right text-xs text-muted-foreground">{p.sessionNames.join(' · ')}</div></div><button onClick={() => { if (window.confirm('Delete this programme?')) del.mutate({ programmeId: p.id }, { onSuccess: () => { qc.invalidateQueries({ queryKey: getGetProgrammesQueryKey() }); if (location.startsWith(`/programme/${p.id}`)) setLocation('/programme'); } }); }} className="mt-4 flex items-center gap-1 text-xs font-bold uppercase text-muted-foreground hover:text-destructive" data-testid={`button-delete-programme-${p.id}`}><Trash2 size={14} /> Delete</button></article>)}</div> : <EmptyBlock title="No programme yet" detail="Build your first weekly cycle. Keep it simple enough to execute when the room is loud." action={<Button onClick={() => setEditing(true)} className="bg-primary text-primary-foreground" data-testid="button-empty-new-programme"><Plus size={17} /> Build a programme</Button>} />}</div>;
+  if (isError)   return <ErrorBlock retry={() => refetch()} />;
+
+  return (
+    <div>
+      <PageHead
+        eyebrow="Training plans"
+        title="Programme room."
+        detail="A good week removes decisions from the moment you need to make them."
+      />
+
+      <div className="mb-7 flex justify-end">
+        <Button
+          variant="primary"
+          onClick={() => setEditing((v) => !v)}
+          data-testid="button-new-programme"
+        >
+          <Plus size={18} /> New programme
+        </Button>
+      </div>
+
+      {editing && (
+        <section className="mb-7 rounded-xl border-2 border-primary/30 bg-card p-5">
+          <div className="mb-5 flex items-start justify-between">
+            <div>
+              <p className="font-data text-[10px] uppercase tracking-widest text-primary">Build a week</p>
+              <h2 className="font-display text-3xl font-semibold uppercase">New programme</h2>
+            </div>
+            <button
+              onClick={() => setEditing(false)}
+              className="tap text-muted-foreground hover:text-foreground"
+              data-testid="button-close-programme-form"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <ProgrammeForm onDone={() => setEditing(false)} />
+        </section>
+      )}
+
+      {data?.length ? (
+        <div className="space-y-4">
+          {data.map((p) => (
+            <article key={p.id} className="rounded-xl border border-border bg-card p-5" data-testid={`card-programme-${p.id}`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-data text-[10px] uppercase tracking-widest text-primary">Weekly cycle</p>
+                  <h2 className="mt-1 font-display text-4xl font-semibold uppercase">{p.name}</h2>
+                </div>
+                <Link
+                  href={`/programme/${p.id}`}
+                  className="tap flex h-10 w-10 items-center justify-center rounded-full bg-elevated"
+                  data-testid={`link-programme-${p.id}`}
+                >
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
+              <div className="mt-6 flex items-end justify-between border-t border-border pt-4">
+                <div className="flex gap-5">
+                  <div>
+                    <p className="font-data text-2xl font-semibold">{p.sessionsPerWeek}×</p>
+                    <p className="text-xs text-muted-foreground">per week</p>
+                  </div>
+                  <div>
+                    <p className="font-data text-2xl font-semibold">{p.lengthWeeks}w</p>
+                    <p className="text-xs text-muted-foreground">length</p>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-muted-foreground">{p.sessionNames.join(' · ')}</div>
+              </div>
+              <button
+                onClick={() => {
+                  if (window.confirm('Delete this programme?'))
+                    del.mutate({ programmeId: p.id }, { onSuccess: () => {
+                      qc.invalidateQueries({ queryKey: getGetProgrammesQueryKey() });
+                      if (location.startsWith(`/programme/${p.id}`)) setLocation('/programme');
+                    }});
+                }}
+                className="mt-4 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground hover:text-destructive"
+                data-testid={`button-delete-programme-${p.id}`}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyBlock
+          title="No programme yet"
+          detail="Build your first weekly cycle. Keep it simple enough to execute when the room is loud."
+          action={
+            <Button variant="primary" onClick={() => setEditing(true)} data-testid="button-empty-new-programme">
+              <Plus size={17} /> Build a programme
+            </Button>
+          }
+        />
+      )}
+    </div>
+  );
 }
 
+// ─────────────────────────────────────────────────────────
+// Programme detail
+// ─────────────────────────────────────────────────────────
+
 export function ProgrammeDetailPage() {
-  const params = useParams<{ id: string }>(); const id = Number(params.id); const q = useGetProgramme(id, { query: { queryKey: getGetProgrammeQueryKey(id), enabled: Number.isFinite(id) } }); const [editing, setEditing] = useState(false); const [, setLocation] = useLocation(); const start = useStartWorkout(); const qc = useQueryClient();
-  if (q.isLoading) return <LoadingBlock />; if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />; const p = q.data;
-  return <div><Link href="/programme" className="mb-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="link-back-programmes">← All programmes</Link><PageHead eyebrow={`${p.sessionsPerWeek}× / week · ${p.lengthWeeks} weeks`} title={p.name} detail={`Last updated ${formatDate(p.updatedAt)}. Tap a session to train it now.`} />{editing ? <section className="rounded-xl border border-border bg-card p-5"><ProgrammeForm initial={{ name: p.name, sessionsPerWeek: p.sessionsPerWeek, lengthWeeks: p.lengthWeeks, sessions: p.sessions.map((s) => ({ sessionNumber: s.sessionNumber, name: s.name, exercises: s.exercises.map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, percentage: e.percentage })) })) }} programmeId={p.id} onDone={() => setEditing(false)} /></section> : <><div className="mb-5 flex justify-end"><Button onClick={() => setEditing(true)} className="border border-border bg-card" data-testid="button-edit-programme"><Edit3 size={16} /> Edit programme</Button></div><div className="space-y-4">{p.sessions.map((s) => <section key={s.id} className="rounded-xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-4"><div><p className="font-data text-[10px] uppercase tracking-widest text-primary">Session {String(s.sessionNumber).padStart(2, '0')}</p><h2 className="font-display text-4xl font-bold uppercase">{s.name}</h2></div><Button disabled={start.isPending} onClick={() => start.mutate({ data: { programmeId: p.id, sessionNumber: s.sessionNumber } }, { onSuccess: (w) => { qc.setQueryData(getGetWorkoutQueryKey(w.id), w); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); setLocation(`/workout/${w.id}`); } })} className="bg-primary text-primary-foreground" data-testid={`button-start-session-${s.id}`}>Start <ArrowRight size={16} /></Button></div><div className="mt-5 divide-y divide-border border-t border-border">{s.exercises.map((e) => <div key={e.id} className="flex items-center justify-between py-4"><div><p className="font-bold">{exerciseLabels[e.exercise]}</p><p className="text-xs text-muted-foreground">{e.sets} sets × {e.reps} reps</p></div><span className="font-data text-sm text-primary">{e.percentage}%</span></div>)}</div></section>)}</div></>}</div>;
+  const params = useParams<{ id: string }>();
+  const id = Number(params.id);
+  const q = useGetProgramme(id, { query: { queryKey: getGetProgrammeQueryKey(id), enabled: Number.isFinite(id) } });
+  const [editing, setEditing] = useState(false);
+  const [, setLocation] = useLocation();
+  const start = useStartWorkout();
+  const qc = useQueryClient();
+
+  if (q.isLoading) return <LoadingBlock />;
+  if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />;
+  const p = q.data;
+
+  return (
+    <div>
+      <Link
+        href="/programme"
+        className="mb-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        data-testid="link-back-programmes"
+      >
+        ← All programmes
+      </Link>
+
+      <PageHead
+        eyebrow={`${p.sessionsPerWeek}× / week · ${p.lengthWeeks} weeks`}
+        title={p.name}
+        detail={`Last updated ${formatDate(p.updatedAt)}. Tap a session to train it now.`}
+      />
+
+      {editing ? (
+        <section className="rounded-xl border border-border bg-card p-5">
+          <ProgrammeForm
+            initial={{ name: p.name, sessionsPerWeek: p.sessionsPerWeek, lengthWeeks: p.lengthWeeks, sessions: p.sessions.map((s) => ({ sessionNumber: s.sessionNumber, name: s.name, exercises: s.exercises.map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, percentage: e.percentage })) })) }}
+            programmeId={p.id}
+            onDone={() => setEditing(false)}
+          />
+        </section>
+      ) : (
+        <>
+          <div className="mb-5 flex justify-end">
+            <Button
+              variant="tertiary"
+              onClick={() => setEditing(true)}
+              data-testid="button-edit-programme"
+            >
+              <Edit3 size={16} /> Edit programme
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {p.sessions.map((s) => (
+              <section key={s.id} className="rounded-xl border border-border bg-card p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-data text-[10px] uppercase tracking-widest text-primary">Session {String(s.sessionNumber).padStart(2, '0')}</p>
+                    <h2 className="font-display text-4xl font-semibold uppercase">{s.name}</h2>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    loading={start.isPending}
+                    onClick={() => start.mutate(
+                      { data: { programmeId: p.id, sessionNumber: s.sessionNumber } },
+                      { onSuccess: (w) => { qc.setQueryData(getGetWorkoutQueryKey(w.id), w); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); setLocation(`/workout/${w.id}`); } }
+                    )}
+                    data-testid={`button-start-session-${s.id}`}
+                  >
+                    Start <ArrowRight size={14} />
+                  </Button>
+                </div>
+                <div className="mt-5 divide-y divide-border border-t border-border">
+                  {s.exercises.map((e) => (
+                    <div key={e.id} className="flex items-center justify-between py-4">
+                      <div>
+                        <p className="font-semibold">{exerciseLabels[e.exercise]}</p>
+                        <p className="text-xs text-muted-foreground">{e.sets} sets × {e.reps} reps</p>
+                      </div>
+                      <span className="font-data text-sm text-primary">{e.percentage}%</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
+
+// ─────────────────────────────────────────────────────────
+// Workout
+// ─────────────────────────────────────────────────────────
 
 export function WorkoutPage() {
   const params = useParams<{ id: string }>();
@@ -101,17 +653,37 @@ export function WorkoutPage() {
   if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />;
   const w = q.data;
   const current = w.sets.find((s) => s.status === 'pending');
-  const done = (next: typeof w) => { qc.setQueryData(getGetWorkoutQueryKey(w.id), next); qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }); };
+  const done = (next: typeof w) => {
+    qc.setQueryData(getGetWorkoutQueryKey(w.id), next);
+    qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() });
+  };
 
+  // Session complete screen
   if (w.status === 'completed') return (
     <div className="text-center">
-      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary"><Check size={38} /></div>
+      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary/20">
+        <Check size={36} className="text-secondary" />
+      </div>
       <p className="font-data text-xs uppercase tracking-widest text-primary">Session logged</p>
-      <h1 className="mt-2 font-display text-6xl font-bold uppercase">{w.sessionName}</h1>
-      <p className="mt-3 text-muted-foreground">{w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts</p>
+      <h1 className="mt-2 font-display text-6xl font-semibold uppercase">{w.sessionName}</h1>
+      <p className="mt-3 text-muted-foreground">
+        {w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts
+      </p>
       <div className="mt-8 flex flex-col gap-3">
-        <Link href="/" className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground" data-testid="link-finished-home">Back to today</Link>
-        <Link href="/history" className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-bold" data-testid="link-finished-history">View history</Link>
+        <Link
+          href="/"
+          className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          data-testid="link-finished-home"
+        >
+          Back to today
+        </Link>
+        <Link
+          href="/history"
+          className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold"
+          data-testid="link-finished-history"
+        >
+          View history
+        </Link>
       </div>
     </div>
   );
@@ -126,116 +698,228 @@ export function WorkoutPage() {
       },
     });
   };
+
   const missCurrent = (action: 'retry' | 'move_on') => {
-    if (current) miss.mutate({ workoutId: w.id, setId: current.id, data: { action } }, { onSuccess: (next) => { done(next); setShowMiss(false); } });
+    if (current)
+      miss.mutate({ workoutId: w.id, setId: current.id, data: { action } }, {
+        onSuccess: (next) => { done(next); setShowMiss(false); },
+      });
   };
 
-  // Per-exercise progress
-  const exerciseProgress = current
-    ? Math.round(((current.setNumber - 1) / current.totalSets) * 100)
-    : 100;
+  // Status bar for current exercise
+  const exerciseStatuses: WorkoutSetStatus[] = current
+    ? w.sets
+        .filter((s) => s.exercise === current.exercise)
+        .map((s) => {
+          if (s.id === current.id) return 'current';
+          if (s.status === 'completed') return 'completed';
+          if (s.status === 'missed')    return 'missed';
+          return 'pending';
+        })
+    : [];
+
+  // Next exercise name (for exercise complete banner)
   const nextExercise = current
-    ? (() => { const nextPending = w.sets.find((s) => s.status === 'pending' && s.id !== current.id); return nextPending && nextPending.exercise !== current.exercise ? exerciseLabels[nextPending.exercise] : null; })()
+    ? (() => {
+        const nextPending = w.sets.find((s) => s.status === 'pending' && s.id !== current.id);
+        return nextPending && nextPending.exercise !== current.exercise ? exerciseLabels[nextPending.exercise] : null;
+      })()
     : null;
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <Link href="/" className="font-data text-[10px] uppercase tracking-widest text-muted-foreground" data-testid="link-workout-exit">Exit workout</Link>
+          <Link
+            href="/"
+            className="font-data text-[10px] uppercase tracking-widest text-muted-foreground"
+            data-testid="link-workout-exit"
+          >
+            ← Exit workout
+          </Link>
           <p className="mt-3 font-data text-[10px] uppercase tracking-widest text-primary">{w.programmeName}</p>
-          <h1 className="font-display text-5xl font-bold uppercase leading-none">{w.sessionName}</h1>
+          <h1 className="font-display text-5xl font-semibold uppercase leading-none">{w.sessionName}</h1>
         </div>
         <div className="text-right">
-          <p className="font-data text-2xl font-bold">{w.completedSets}/{w.sets.length}</p>
+          <p className="font-data text-2xl font-semibold">{w.completedSets}/{w.sets.length}</p>
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">reps</p>
         </div>
       </div>
 
       {/* Per-exercise progress bar */}
       {current && (
-        <div className="mb-8">
-          <div className="mb-2 flex items-center justify-between">
-            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">{exerciseLabels[current.exercise]}</p>
-            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">Rep {current.setNumber} / {current.totalSets}</p>
+        <div className="mb-6 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">
+              {exerciseLabels[current.exercise]}
+            </p>
+            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">
+              Rep {current.setNumber} / {current.totalSets}
+            </p>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full bg-secondary transition-all duration-300" style={{ width: `${exerciseProgress}%` }} />
-          </div>
+          <SetStatusBar statuses={exerciseStatuses} />
         </div>
       )}
 
-      {/* Exercise complete interstitial */}
+      {/* Main content: exercise complete | current set | all done */}
       {finishedExercise ? (
-        <div className="rounded-xl border-2 border-secondary bg-secondary/15 p-8 text-center animate-in fade-in duration-300">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-            <Check size={30} className="text-secondary-foreground" />
-          </div>
-          <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Exercise complete</p>
-          <h2 className="mt-2 font-display text-5xl font-bold uppercase leading-tight">{finishedExercise}</h2>
-          {nextExercise && <p className="mt-3 text-sm text-muted-foreground">Next up: <span className="font-bold text-foreground">{nextExercise}</span></p>}
-          <Button onClick={() => setFinishedExercise(null)} className="mt-6 min-h-14 w-full bg-primary text-primary-foreground" data-testid="button-next-exercise">
-            {nextExercise ? <>Next exercise <ArrowRight size={17} /></> : <>Finish session <ArrowRight size={17} /></>}
-          </Button>
-        </div>
+        <ExerciseCompleteBanner
+          exerciseName={finishedExercise}
+          nextExerciseName={nextExercise}
+          onContinue={() => setFinishedExercise(null)}
+        />
       ) : current ? (
-        <section className="relative overflow-hidden rounded-xl bg-accent p-6 text-accent-foreground">
-          <div className="absolute right-5 top-2 font-display text-[8rem] font-bold leading-none opacity-10">{String(current.setNumber).padStart(2, '0')}</div>
-          <div className="relative">
-            <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Rep {current.setNumber} of {current.totalSets}</p>
-            <h2 className="mt-5 font-display text-6xl font-bold uppercase leading-[.8]">{exerciseLabels[current.exercise]}</h2>
-            <div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-3">
-              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Load</p><p className="text-workout-weight text-secondary">{current.weight}<span className="text-workout-weight-unit ml-3 opacity-70">kg</span></p></div>
-              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Reps</p><p className="font-display text-5xl font-bold">{current.reps}</p></div>
-              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Target</p><p className="font-display text-5xl font-bold">{current.percentage}%</p></div>
-            </div>
-            <div className="mt-9 grid gap-3">
-              <Button onClick={completeCurrent} disabled={complete.isPending} className="min-h-16 bg-secondary text-lg text-secondary-foreground" data-testid="button-complete-set">
-                <Check size={21} /> {complete.isPending ? 'Logging…' : 'Complete rep'}
-              </Button>
-              <Button onClick={() => setShowMiss(true)} className="min-h-16 border border-accent-foreground/30 bg-accent-foreground/10 text-accent-foreground" data-testid="button-miss-set">
-                <CircleAlert size={19} /> Missed it
-              </Button>
-            </div>
+        <>
+          <WorkoutCurrentSet
+            exercise={current.exercise}
+            setNumber={current.setNumber}
+            totalSets={current.totalSets}
+            weight={current.weight}
+            reps={current.reps}
+            percentage={current.percentage}
+          />
+          <div className="mt-4 grid gap-3">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full"
+              onClick={completeCurrent}
+              loading={complete.isPending}
+              data-testid="button-complete-set"
+            >
+              <Check size={21} /> Complete rep
+            </Button>
+            <Button
+              variant="tertiary"
+              size="lg"
+              className="w-full"
+              onClick={() => setShowMiss(true)}
+              data-testid="button-miss-set"
+            >
+              <CircleAlert size={19} /> Missed it
+            </Button>
           </div>
-        </section>
+        </>
       ) : (
-        <div className="rounded-xl border border-secondary bg-secondary/15 p-7 text-center">
-          <Check className="mx-auto mb-3" />
-          <h2 className="font-display text-4xl font-bold uppercase">All reps accounted for</h2>
-          <Button onClick={() => finish.mutate({ workoutId: w.id }, { onSuccess: (next) => { done(next); qc.invalidateQueries({ queryKey: getGetHistoryQueryKey() }); } })} disabled={finish.isPending} className="mt-5 bg-primary text-primary-foreground" data-testid="button-finish-workout">
-            {finish.isPending ? 'Finishing…' : 'Finish workout'} <ArrowRight size={17} />
+        <div className="rounded-xl border border-success/40 bg-success/10 p-7 text-center">
+          <Check className="mx-auto mb-3 text-success" size={28} />
+          <h2 className="font-display text-4xl font-semibold uppercase">All reps accounted for</h2>
+          <Button
+            variant="primary"
+            className="mt-5"
+            loading={finish.isPending}
+            onClick={() => finish.mutate(
+              { workoutId: w.id },
+              { onSuccess: (next) => { done(next); qc.invalidateQueries({ queryKey: getGetHistoryQueryKey() }); } }
+            )}
+            data-testid="button-finish-workout"
+          >
+            Finish workout <ArrowRight size={17} />
           </Button>
         </div>
       )}
 
-      {showMiss && current && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/45 p-4">
-          <div className="w-full rounded-xl border border-border bg-card p-6 shadow-2xl">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-data text-[10px] uppercase tracking-widest text-primary">Rep {current.setNumber} · {exerciseLabels[current.exercise]}</p>
-                <h2 className="mt-1 font-display text-4xl font-bold uppercase">Choose your next move</h2>
-              </div>
-              <button onClick={() => setShowMiss(false)} data-testid="button-close-missed"><X /></button>
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
-            <div className="mt-6 grid gap-3">
-              <Button onClick={() => missCurrent('retry')} disabled={miss.isPending} className="justify-between border border-border bg-background" data-testid="button-retry-set">
-                <span><span className="block text-left">Retry this rep</span><span className="block text-left text-xs font-normal text-muted-foreground">Take a breath and make another attempt</span></span><ArrowRight size={17} />
-              </Button>
-              <Button onClick={() => missCurrent('move_on')} disabled={miss.isPending} className="justify-between bg-primary text-primary-foreground" data-testid="button-move-on">
-                <span><span className="block text-left">Move on</span><span className="block text-left text-xs font-normal text-primary-foreground/70">Log it and continue the session</span></span><ArrowRight size={17} />
-              </Button>
-            </div>
-          </div>
+      {/* Missed-set sheet */}
+      <BottomSheet
+        open={showMiss && !!current}
+        onClose={() => setShowMiss(false)}
+        title="Choose your next move"
+        subtitle={`Rep ${current?.setNumber ?? ''} · ${current ? exerciseLabels[current.exercise] : ''}`}
+      >
+        <p className="mb-5 text-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
+        <div className="grid gap-3">
+          <Button
+            variant="tertiary"
+            size="lg"
+            className="w-full justify-between"
+            onClick={() => missCurrent('retry')}
+            loading={miss.isPending}
+            data-testid="button-retry-set"
+          >
+            <span>
+              <span className="block text-left">Retry this rep</span>
+              <span className="block text-left text-xs font-normal text-muted-foreground">Take a breath and make another attempt</span>
+            </span>
+            <ArrowRight size={17} />
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full justify-between"
+            onClick={() => missCurrent('move_on')}
+            loading={miss.isPending}
+            data-testid="button-move-on"
+          >
+            <span>
+              <span className="block text-left">Move on</span>
+              <span className="block text-left text-xs font-normal text-primary-foreground/70">Log it and continue the session</span>
+            </span>
+            <ArrowRight size={17} />
+          </Button>
         </div>
-      )}
+      </BottomSheet>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────
+// History
+// ─────────────────────────────────────────────────────────
+
 export function HistoryPage() {
-  const q = useGetHistory(); if (q.isLoading) return <LoadingBlock />; if (q.isError) return <ErrorBlock retry={() => q.refetch()} />; const history = q.data || [];
-  return <div><PageHead eyebrow="Training history" title="The work stays." detail="A record of completed sessions, misses included. Consistency is the metric." />{history.length ? <div className="overflow-hidden rounded-xl border border-border bg-card">{history.map((w, i) => <article key={w.id} className="border-b border-border p-5 last:border-0" data-testid={`row-history-${w.id}`}><div className="flex gap-4"><span className="font-data text-xs text-muted-foreground">{String(history.length - i).padStart(2, '0')}</span><div className="min-w-0 flex-1"><h2 className="font-display text-2xl font-bold uppercase">{w.sessionName}</h2><p className="text-xs text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p><div className="mt-2 flex gap-5 font-data text-xs"><span><b className="text-foreground">{w.completedSets}</b> / {w.totalSets} sets</span>{w.missedSets > 0 && <span className="text-destructive">{w.missedSets} missed</span>}<span className="rounded-full bg-secondary/30 px-2 py-0.5 text-accent">{w.attempts} attempts</span></div></div></div></article>)}</div> : <EmptyBlock title="Nothing logged yet" detail="Start a session from Track or your programme. This page will remember the work." action={<Link href="/" className="tap inline-flex min-h-12 items-center rounded-lg bg-primary px-5 text-sm font-bold text-primary-foreground" data-testid="link-history-start">Go to Track <ArrowRight size={16} className="ml-2" /></Link>} />}</div>;
+  const q = useGetHistory();
+  if (q.isLoading) return <LoadingBlock />;
+  if (q.isError)   return <ErrorBlock retry={() => q.refetch()} />;
+  const history = q.data || [];
+
+  return (
+    <div>
+      <PageHead
+        eyebrow="Training history"
+        title="The work stays."
+        detail="A record of completed sessions, misses included. Consistency is the metric."
+      />
+      {history.length ? (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          {history.map((w, i) => (
+            <article
+              key={w.id}
+              className="border-b border-border p-5 last:border-0"
+              data-testid={`row-history-${w.id}`}
+            >
+              <div className="flex gap-4">
+                <span className="font-data text-xs text-muted-foreground">
+                  {String(history.length - i).padStart(2, '0')}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-2xl font-semibold uppercase">{w.sessionName}</h2>
+                  <p className="text-xs text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p>
+                  <div className="mt-2 flex gap-5 font-data text-xs">
+                    <span><b className="text-foreground">{w.completedSets}</b> / {w.totalSets} sets</span>
+                    {w.missedSets > 0 && <span className="text-destructive">{w.missedSets} missed</span>}
+                    <span className="rounded-full bg-secondary/20 px-2 py-0.5 text-secondary">{w.attempts} attempts</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyBlock
+          title="Nothing logged yet"
+          detail="Start a session from Track or your programme. This page will remember the work."
+          action={
+            <Link
+              href="/"
+              className="tap inline-flex min-h-12 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground"
+              data-testid="link-history-start"
+            >
+              Go to Track <ArrowRight size={16} className="ml-2" />
+            </Link>
+          }
+        />
+      )}
+    </div>
+  );
 }

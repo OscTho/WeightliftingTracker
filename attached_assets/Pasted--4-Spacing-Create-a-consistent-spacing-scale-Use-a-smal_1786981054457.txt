@@ -1,0 +1,290 @@
+## 4. Spacing
+
+Create a consistent spacing scale.
+
+Use a small number of spacing tokens rather than arbitrary margins and padding.
+
+For example:
+
+4px
+8px
+12px
+16px
+24px
+32px
+48px
+64px
+
+Adjust these values if you think another scale is more appropriate.
+
+## 5. Layout
+
+The application is mobile-first.
+
+Define:
+
+- Page margins
+- Content width
+- Grid behaviour
+- Card spacing
+- Section spacing
+- Bottom navigation spacing
+- Safe areas for mobile devices
+
+The interface should be comfortable to use with one hand while training.
+
+## 6. Buttons
+
+Create reusable button components with variants:
+
+- Primary
+- Secondary
+- Tertiary
+- Destructive
+- Success
+- Icon button
+
+Each should have:
+
+- Default
+- Hover
+- Pressed
+- Disabled
+- Loading
+
+states.
+
+Buttons used during workouts should have large touch targets.
+
+The main workout action should be visually obvious.
+
+## 7. Form components
+
+Create reusable:
+
+- Text input
+- Number input
+- Select
+- Dropdown
+- Toggle
+- Checkbox
+- Radio button
+- Search field
+
+They should all use the design system's typography, spacing, colours and border radius.
+
+## 8. Cards
+
+Create reusable card components for:
+
+- Workout
+- Exercise
+- Programme
+- PB
+- Profile/statistics
+
+Cards should support:
+
+- Default
+- Interactive
+- Selected
+- Disabled
+
+states.
+
+## 9. Workout-specific components
+
+Create reusable components specifically for the weightlifting experience.
+
+### Exercise header
+
+Example:
+
+SNATCH
+
+8 SETS × 2 REPS
+
+75% PB
+
+### Current set
+
+Example:
+
+SET 3 OF 8
+
+67.5 KG
+
+2 REPS
+
+The weight should be the most visually prominent element.
+
+### Set status
+
+Create clear states for:
+
+- Not started
+- Current
+- Completed
+- Missed
+- Retried
+- Skipped
+
+### PB celebration
+
+Create a reusable PB component that can display:
+
+NEW PB
+
+92.5 KG
+
++2.5 KG
+
+This should feel rewarding and visually distinct from normal workout information.
+
+## 10. Navigation
+
+Create a mobile-first navigation system.
+
+Primary navigation should eventually support:
+
+- Today
+- Programme
+- History
+- PBs
+- Profile
+
+[EDIT: Change these if necessary]
+
+The navigation should be designed so that the active section is obvious.
+
+## 11. Feedback states
+
+Create reusable components for:
+
+- Success
+- Error
+- Warning
+- Information
+- Loading
+- Empty state
+- Confirmation
+
+Include appropriate icons where useful.
+
+## 12. Modals and bottom sheets
+
+Create reusable modal/bottom-sheet components for actions such as:
+
+- Confirming a missed set
+- Retrying a set
+- Moving on from a missed set
+- Editing a programme
+- Editing PBs
+
+These should be mobile-friendly.
+
+## 13. Icons
+
+Use one consistent icon library throughout the application.
+
+Do not mix multiple icon styles.
+
+[EDIT: Preferred icon library if you have one]
+
+## 14. Borders, radius and shadows
+
+Define global design tokens for:
+
+- Border radius
+- Border width
+- Shadow/elevation
+
+[EDIT: e.g. I want a fairly minimal interface with subtle shadows and moderately rounded corners]
+
+Do not use excessive shadows or decorative effects.
+
+## 15. Responsive behaviour
+
+The design system should work across:
+
+- Mobile
+- Tablet
+- Desktop
+
+However, mobile is the primary experience.
+
+Workout screens should remain optimised for mobile even on larger screens.
+
+## 16. Accessibility
+
+Follow accessible design principles.
+
+Include:
+
+- Sufficient colour contrast
+- Visible focus states
+- Appropriate touch target sizes
+- Semantic HTML
+- Accessible labels
+- Keyboard navigation where appropriate
+- Screen-reader-friendly components
+
+## 17. Component architecture
+
+Build these as genuinely reusable components.
+
+Do not duplicate styles across individual screens.
+
+Use shared design tokens for:
+
+- Colours
+- Typography
+- Spacing
+- Radius
+- Shadows
+- Breakpoints
+
+Components should be easy to reuse and modify later.
+
+## 18. Design system showcase
+
+Create a dedicated internal/design-system page that displays all components and their different states.
+
+Include:
+
+- Colour palette
+- Typography
+- Buttons
+- Inputs
+- Cards
+- Workout components
+- PB components
+- Navigation
+- Modals
+- Feedback states
+- Loading states
+- Empty states
+
+Label each component clearly so I can understand what it is.
+
+## 19. Important constraints
+
+Do not add unnecessary functionality.
+
+Do not change the underlying workout logic.
+
+Do not change the database schema unless absolutely necessary.
+
+Do not remove existing features.
+
+Focus on establishing a consistent visual language and reusable component system.
+
+Before making major architectural changes, explain what you intend to change and why.
+
+At the end, explain:
+
+1. What design tokens you created
+2. What reusable components you created
+3. Where they are stored in the project
+4. How future screens should use them
+5. How I can change the global visual style later

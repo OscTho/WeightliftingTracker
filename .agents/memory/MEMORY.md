@@ -1,1 +1,2 @@
 - [Lofte design system](design-system.md) — dark-first, Geist font, full colour token set and named type-scale utilities; never reintroduce a light theme.
+- [Lofte component library](component-library.md) — full set of reusable components built in src/components/; always import from there, never redefine inline.

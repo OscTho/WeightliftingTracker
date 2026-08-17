@@ -90,6 +90,33 @@
   /* Typography & spacing ──────────────────────────────── */
   --app-font-sans: 'Geist', system-ui, sans-serif;
   --radius: 0.75rem;
+
+  /* Spacing scale (4-point grid) ──────────────────────── */
+  --space-1:   4px;   /* gap-1  · tight inline gaps         */
+  --space-2:   8px;   /* gap-2  · small gaps                */
+  --space-3:  12px;   /* gap-3  · medium-tight gaps         */
+  --space-4:  16px;   /* gap-4  · base — page margin        */
+  --space-6:  24px;   /* gap-6  · card internal padding     */
+  --space-8:  32px;   /* gap-8  · section spacing           */
+  --space-12: 48px;   /* gap-12 · large section breaks      */
+  --space-16: 64px;   /* gap-16 · hero / page-level spacing */
+
+  /* Semantic layout tokens ────────────────────────────── */
+  --page-margin:   16px;   /* px-4  — horizontal page edges  */
+  --card-padding:  20px;   /* p-5   — card inner padding     */
+  --section-gap:   16px;   /* space-y-4 — between sections   */
+  --nav-height:    64px;   /* bottom nav height              */
+
+  /* Shadows (dark-optimised — deeper blacks) ──────────── */
+  --shadow-sm:   0 1px  3px 0        rgb(0 0 0 / 0.35);
+  --shadow-md:   0 4px 12px 0        rgb(0 0 0 / 0.45);
+  --shadow-lg:   0 8px 28px 0        rgb(0 0 0 / 0.55);
+  --shadow-xl:   0 16px 48px -4px    rgb(0 0 0 / 0.65);
+  --shadow-sheet: 0 -4px 32px 0      rgb(0 0 0 / 0.60);
+
+  /* Border widths ─────────────────────────────────────── */
+  --border-width:        1px;
+  --border-width-strong: 2px;
 }
 
 /* ─────────────────────────────────────────────────────────
