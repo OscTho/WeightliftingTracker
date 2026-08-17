@@ -56,7 +56,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={href}
                 href={href}
-                className={`tap flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-colors ${
+                className={`tap flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-lg type-caption font-semibold transition-colors ${
                   active
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground'
@@ -96,12 +96,12 @@ export function ErrorBlock({ retry }: { retry?: () => void }) {
       role="alert"
       data-testid="status-error"
     >
-      <p className="font-display text-2xl font-semibold uppercase">Couldn't load this page</p>
-      <p className="mt-1 text-sm text-muted-foreground">Check your connection, then try again.</p>
+      <p className="type-section-heading">Couldn't load this page</p>
+      <p className="mt-1 type-body-sm text-muted-foreground">Check your connection, then try again.</p>
       {retry && (
         <button
           onClick={retry}
-          className="tap mt-4 rounded-lg bg-destructive px-5 py-3 text-sm font-semibold text-destructive-foreground"
+          className="tap mt-4 rounded-lg bg-destructive px-5 py-3 type-button text-destructive-foreground"
           data-testid="button-retry"
         >
           Try again
@@ -120,8 +120,8 @@ export function EmptyBlock({
       data-testid="status-empty"
     >
       <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-secondary" />
-      <p className="font-display text-3xl font-semibold uppercase">{title}</p>
-      <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">{detail}</p>
+      <p className="type-section-heading">{title}</p>
+      <p className="mx-auto mt-2 max-w-sm type-body-sm text-muted-foreground">{detail}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>
   );

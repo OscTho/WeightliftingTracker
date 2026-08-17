@@ -24,9 +24,9 @@ const exerciseOptions: ExerciseName[] = ['snatch', 'clean_and_jerk', 'back_squat
 function PageHead({ eyebrow, title, detail }: { eyebrow: string; title: string; detail?: string }) {
   return (
     <div className="mb-8">
-      <p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">{eyebrow}</p>
-      <h1 className="mt-1 font-display text-5xl font-semibold uppercase leading-[.88] tracking-tight">{title}</h1>
-      {detail && <p className="mt-3 text-sm text-muted-foreground">{detail}</p>}
+      <p className="type-caption text-primary">{eyebrow}</p>
+      <h1 className="mt-1 type-page-title">{title}</h1>
+      {detail && <p className="mt-3 type-body-sm text-muted-foreground">{detail}</p>}
     </div>
   );
 }
@@ -36,8 +36,8 @@ function StatsRow({ stats }: { stats: { label: string; value: string; accent?: b
     <div className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
       {stats.map((s) => (
         <div key={s.label} className={`bg-card p-4 ${s.accent ? 'border-t-2 border-secondary' : ''}`}>
-          <p className="font-data text-[10px] uppercase tracking-wider text-muted-foreground">{s.label}</p>
-          <p className="mt-1 font-display text-3xl font-semibold">{s.value}</p>
+          <p className="type-caption text-muted-foreground">{s.label}</p>
+          <p className="mt-1 text-pb-number">{s.value}</p>
         </div>
       ))}
     </div>
@@ -57,10 +57,10 @@ export function DashboardPage() {
   return (
     <div className="animate-in fade-in duration-500">
       <div className="mb-8">
-        <p className="font-data text-[11px] uppercase tracking-[.22em] text-primary">
+        <p className="type-caption text-primary">
           Today · {formatShortDate(new Date().toISOString())}
         </p>
-        <h1 className="mt-1 font-display text-5xl font-semibold uppercase leading-[.88] tracking-tight">
+        <h1 className="mt-1 type-page-title">
           Ready when<br />
           <span className="text-primary">{d.profile ? d.profile.name.split(' ')[0] : 'you'} are.</span>
         </h1>
@@ -69,12 +69,12 @@ export function DashboardPage() {
       {!d.profile && (
         <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-secondary bg-secondary/15 p-4">
           <div>
-            <p className="font-semibold">Set up your athlete profile</p>
-            <p className="text-sm text-muted-foreground">Your percentages need a starting point.</p>
+            <p className="type-subheading">Set up your athlete profile</p>
+            <p className="type-body-sm text-muted-foreground">Your percentages need a starting point.</p>
           </div>
           <Link
             href="/profile"
-            className="tap shrink-0 rounded-lg bg-foreground px-3 py-2.5 text-xs font-semibold text-background"
+            className="tap shrink-0 rounded-lg bg-foreground px-3 py-2.5 type-caption font-semibold text-background"
             data-testid="link-setup-profile"
           >
             Set up <ArrowRight size={14} className="ml-1 inline" />
@@ -87,11 +87,11 @@ export function DashboardPage() {
         <section className="relative overflow-hidden rounded-xl bg-elevated p-6 text-foreground">
           <div className="absolute -right-4 -top-10 font-display text-[10rem] font-semibold leading-none opacity-[0.05]">01</div>
           <div className="relative">
-            <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Next session</p>
+            <p className="type-caption text-secondary">Next session</p>
             {d.nextSession ? (
               <>
-                <h2 className="mt-2 font-display text-5xl font-semibold uppercase leading-[.86]">{d.nextSession.name}</h2>
-                <p className="mt-4 text-sm text-foreground/60">
+                <h2 className="mt-2 type-page-title">{d.nextSession.name}</h2>
+                <p className="mt-4 type-body-sm text-foreground/60">
                   {d.nextSession.exercises.length} movements · {d.nextSession.exercises.reduce((a, e) => a + e.sets, 0)} working sets
                 </p>
                 <Button
@@ -105,11 +105,11 @@ export function DashboardPage() {
               </>
             ) : (
               <>
-                <h2 className="mt-2 font-display text-4xl font-semibold uppercase">No session queued</h2>
-                <p className="mt-3 text-sm text-foreground/60">Choose a programme and give the week a shape.</p>
+                <h2 className="mt-2 type-page-title">No session queued</h2>
+                <p className="mt-3 type-body-sm text-foreground/60">Choose a programme and give the week a shape.</p>
                 <Link
                   href="/programme"
-                  className="tap mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-secondary px-5 text-sm font-semibold text-secondary-foreground"
+                  className="tap mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-secondary px-5 type-button text-secondary-foreground"
                   data-testid="link-choose-programme"
                 >
                   Browse programmes <ArrowRight size={17} />
@@ -128,8 +128,8 @@ export function DashboardPage() {
         {/* Recent work */}
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <p className="font-display text-2xl font-semibold uppercase">Recent work</p>
-            <Link href="/history" className="text-xs font-semibold uppercase tracking-wide text-primary" data-testid="link-see-history">
+            <p className="type-section-heading">Recent work</p>
+            <Link href="/history" className="type-caption font-semibold text-primary" data-testid="link-see-history">
               See all
             </Link>
           </div>
@@ -138,15 +138,15 @@ export function DashboardPage() {
               {d.recentWorkouts.slice(0, 3).map((w) => (
                 <div key={w.id} className="flex items-center justify-between border-t border-border pt-3">
                   <div>
-                    <p className="font-semibold">{w.sessionName}</p>
-                    <p className="text-xs text-muted-foreground">{formatShortDate(w.date)}</p>
+                    <p className="type-subheading">{w.sessionName}</p>
+                    <p className="type-body-sm text-muted-foreground">{formatShortDate(w.date)}</p>
                   </div>
-                  <span className="font-data text-xs">{w.completedSets}/{w.totalSets}</span>
+                  <span className="font-data type-caption">{w.completedSets}/{w.totalSets}</span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted-foreground">Your completed sessions will land here.</p>
+            <p className="mt-4 type-body-sm text-muted-foreground">Your completed sessions will land here.</p>
           )}
         </section>
       </div>
@@ -182,7 +182,7 @@ export function ProfilePage() {
         detail="Keep your reference lifts close. Lofte uses them to turn percentages into weights you can load."
       />
       {data?.updatedAt && (
-        <p className="font-data text-[11px] uppercase tracking-widest text-muted-foreground -mt-5 mb-8">
+        <p className="type-caption text-muted-foreground -mt-5 mb-8">
           Last updated · {new Date(data.updatedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })} at {new Date(data.updatedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
         </p>
       )}
@@ -204,8 +204,8 @@ export function ProfilePage() {
         <section className="rounded-xl border border-border bg-card p-5">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="font-display text-3xl font-semibold uppercase">Athlete</h2>
-              <p className="text-sm text-muted-foreground">The person behind the bar.</p>
+              <h2 className="type-section-heading">Athlete</h2>
+              <p className="type-body-sm text-muted-foreground">The person behind the bar.</p>
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-secondary font-display text-xl font-semibold">
               {form.name ? form.name.split(' ').map((n) => n[0]).join('').slice(0, 2) : 'LL'}
@@ -223,8 +223,8 @@ export function ProfilePage() {
 
         {/* Personal bests */}
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-display text-3xl font-semibold uppercase">Personal bests</h2>
-          <p className="mb-6 text-sm text-muted-foreground">In kilograms. Be honest; useful beats impressive.</p>
+          <h2 className="type-section-heading">Personal bests</h2>
+          <p className="mb-6 type-body-sm text-muted-foreground">In kilograms. Be honest; useful beats impressive.</p>
           <div className="grid grid-cols-2 gap-4">
             {([['snatchPb', 'Snatch'], ['cleanJerkPb', 'Clean & jerk'], ['backSquatPb', 'Back squat'], ['frontSquatPb', 'Front squat']] as const).map(([key, label]) => (
               <Input
@@ -243,8 +243,8 @@ export function ProfilePage() {
 
         {/* Loading maths */}
         <section className="rounded-xl border border-border bg-card p-5">
-          <h2 className="font-display text-3xl font-semibold uppercase">Loading maths</h2>
-          <p className="mb-5 text-sm text-muted-foreground">Round working weights to what your gym actually has.</p>
+          <h2 className="type-section-heading">Loading maths</h2>
+          <p className="mb-5 type-body-sm text-muted-foreground">Round working weights to what your gym actually has.</p>
           <div className="grid grid-cols-3 gap-2">
             {([1, 2, 2.5] as const).map((n) => (
               <Button
@@ -262,7 +262,7 @@ export function ProfilePage() {
         </section>
 
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm">
+          <p className="type-body-sm">
             {saved
               ? <span className="font-semibold text-success">Profile saved.</span>
               : save.isError
@@ -398,7 +398,7 @@ function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeIn
           <button
             type="button"
             onClick={() => setSession(si, { exercises: [...session.exercises, { exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] })}
-            className="mt-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary"
+            className="mt-4 flex items-center gap-2 type-caption font-semibold text-primary"
             data-testid={`button-add-exercise-${si}`}
           >
             <Plus size={14} /> Add movement
@@ -464,8 +464,8 @@ export function ProgrammePage() {
         <section className="mb-7 rounded-xl border-2 border-primary/30 bg-card p-5">
           <div className="mb-5 flex items-start justify-between">
             <div>
-              <p className="font-data text-[10px] uppercase tracking-widest text-primary">Build a week</p>
-              <h2 className="font-display text-3xl font-semibold uppercase">New programme</h2>
+              <p className="type-caption text-primary">Build a week</p>
+              <h2 className="type-section-heading mt-1">New programme</h2>
             </div>
             <button
               onClick={() => setEditing(false)}
@@ -485,8 +485,8 @@ export function ProgrammePage() {
             <article key={p.id} className="rounded-xl border border-border bg-card p-5" data-testid={`card-programme-${p.id}`}>
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-data text-[10px] uppercase tracking-widest text-primary">Weekly cycle</p>
-                  <h2 className="mt-1 font-display text-4xl font-semibold uppercase">{p.name}</h2>
+                  <p className="type-caption text-primary">Weekly cycle</p>
+                  <h2 className="mt-1 type-page-title">{p.name}</h2>
                 </div>
                 <Link
                   href={`/programme/${p.id}`}
@@ -499,15 +499,15 @@ export function ProgrammePage() {
               <div className="mt-6 flex items-end justify-between border-t border-border pt-4">
                 <div className="flex gap-5">
                   <div>
-                    <p className="font-data text-2xl font-semibold">{p.sessionsPerWeek}×</p>
-                    <p className="text-xs text-muted-foreground">per week</p>
+                    <p className="text-pb-number">{p.sessionsPerWeek}×</p>
+                    <p className="type-body-sm text-muted-foreground">per week</p>
                   </div>
                   <div>
-                    <p className="font-data text-2xl font-semibold">{p.lengthWeeks}w</p>
-                    <p className="text-xs text-muted-foreground">length</p>
+                    <p className="text-pb-number">{p.lengthWeeks}w</p>
+                    <p className="type-body-sm text-muted-foreground">length</p>
                   </div>
                 </div>
-                <div className="text-right text-xs text-muted-foreground">{p.sessionNames.join(' · ')}</div>
+                <div className="text-right type-body-sm text-muted-foreground">{p.sessionNames.join(' · ')}</div>
               </div>
               <button
                 onClick={() => {
@@ -517,7 +517,7 @@ export function ProgrammePage() {
                       if (location.startsWith(`/programme/${p.id}`)) setLocation('/programme');
                     }});
                 }}
-                className="mt-4 flex items-center gap-1 text-xs font-semibold uppercase text-muted-foreground hover:text-destructive"
+                className="mt-4 flex items-center gap-1 type-caption font-semibold text-muted-foreground hover:text-destructive"
                 data-testid={`button-delete-programme-${p.id}`}
               >
                 <Trash2 size={14} /> Delete
@@ -561,7 +561,7 @@ export function ProgrammeDetailPage() {
     <div>
       <Link
         href="/programme"
-        className="mb-5 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        className="mb-5 inline-flex items-center gap-2 type-caption text-muted-foreground"
         data-testid="link-back-programmes"
       >
         ← All programmes
@@ -597,8 +597,8 @@ export function ProgrammeDetailPage() {
               <section key={s.id} className="rounded-xl border border-border bg-card p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-data text-[10px] uppercase tracking-widest text-primary">Session {String(s.sessionNumber).padStart(2, '0')}</p>
-                    <h2 className="font-display text-4xl font-semibold uppercase">{s.name}</h2>
+                    <p className="type-caption text-primary">Session {String(s.sessionNumber).padStart(2, '0')}</p>
+                    <h2 className="mt-1 type-page-title">{s.name}</h2>
                   </div>
                   <Button
                     variant="primary"
@@ -617,10 +617,10 @@ export function ProgrammeDetailPage() {
                   {s.exercises.map((e) => (
                     <div key={e.id} className="flex items-center justify-between py-4">
                       <div>
-                        <p className="font-semibold">{exerciseLabels[e.exercise]}</p>
-                        <p className="text-xs text-muted-foreground">{e.sets} sets × {e.reps} reps</p>
+                        <p className="type-subheading">{exerciseLabels[e.exercise]}</p>
+                        <p className="type-body-sm text-muted-foreground">{e.sets} sets × {e.reps} reps</p>
                       </div>
-                      <span className="font-data text-sm text-primary">{e.percentage}%</span>
+                      <span className="font-data type-body-sm text-primary">{e.percentage}%</span>
                     </div>
                   ))}
                 </div>
@@ -664,22 +664,22 @@ export function WorkoutPage() {
       <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary/20">
         <Check size={36} className="text-secondary" />
       </div>
-      <p className="font-data text-xs uppercase tracking-widest text-primary">Session logged</p>
-      <h1 className="mt-2 font-display text-6xl font-semibold uppercase">{w.sessionName}</h1>
-      <p className="mt-3 text-muted-foreground">
+      <p className="type-caption text-primary">Session logged</p>
+      <h1 className="mt-2 type-page-title">{w.sessionName}</h1>
+      <p className="mt-3 type-body-sm text-muted-foreground">
         {w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts
       </p>
       <div className="mt-8 flex flex-col gap-3">
         <Link
           href="/"
-          className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 type-button text-primary-foreground"
           data-testid="link-finished-home"
         >
           Back to today
         </Link>
         <Link
           href="/history"
-          className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold"
+          className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 type-button"
           data-testid="link-finished-history"
         >
           View history
@@ -733,17 +733,17 @@ export function WorkoutPage() {
         <div>
           <Link
             href="/"
-            className="font-data text-[10px] uppercase tracking-widest text-muted-foreground"
+            className="type-caption text-muted-foreground"
             data-testid="link-workout-exit"
           >
             ← Exit workout
           </Link>
-          <p className="mt-3 font-data text-[10px] uppercase tracking-widest text-primary">{w.programmeName}</p>
-          <h1 className="font-display text-5xl font-semibold uppercase leading-none">{w.sessionName}</h1>
+          <p className="mt-3 type-caption text-primary">{w.programmeName}</p>
+          <h1 className="type-page-title leading-none">{w.sessionName}</h1>
         </div>
         <div className="text-right">
-          <p className="font-data text-2xl font-semibold">{w.completedSets}/{w.sets.length}</p>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">reps</p>
+          <p className="text-pb-number">{w.completedSets}/{w.sets.length}</p>
+          <p className="type-caption text-muted-foreground">reps</p>
         </div>
       </div>
 
@@ -751,10 +751,10 @@ export function WorkoutPage() {
       {current && (
         <div className="mb-6 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">
+            <p className="type-caption text-muted-foreground">
               {exerciseLabels[current.exercise]}
             </p>
-            <p className="font-data text-[10px] uppercase tracking-widest text-muted-foreground">
+            <p className="type-caption text-muted-foreground">
               Rep {current.setNumber} / {current.totalSets}
             </p>
           </div>
@@ -804,7 +804,7 @@ export function WorkoutPage() {
       ) : (
         <div className="rounded-xl border border-success/40 bg-success/10 p-7 text-center">
           <Check className="mx-auto mb-3 text-success" size={28} />
-          <h2 className="font-display text-4xl font-semibold uppercase">All reps accounted for</h2>
+          <h2 className="type-page-title">All reps accounted for</h2>
           <Button
             variant="primary"
             className="mt-5"
@@ -827,7 +827,7 @@ export function WorkoutPage() {
         title="Choose your next move"
         subtitle={`Rep ${current?.setNumber ?? ''} · ${current ? exerciseLabels[current.exercise] : ''}`}
       >
-        <p className="mb-5 text-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
+        <p className="mb-5 type-body-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
         <div className="grid gap-3">
           <Button
             variant="tertiary"
@@ -839,7 +839,7 @@ export function WorkoutPage() {
           >
             <span>
               <span className="block text-left">Retry this rep</span>
-              <span className="block text-left text-xs font-normal text-muted-foreground">Take a breath and make another attempt</span>
+              <span className="block text-left type-body-sm font-normal text-muted-foreground">Take a breath and make another attempt</span>
             </span>
             <ArrowRight size={17} />
           </Button>
@@ -853,7 +853,7 @@ export function WorkoutPage() {
           >
             <span>
               <span className="block text-left">Move on</span>
-              <span className="block text-left text-xs font-normal text-primary-foreground/70">Log it and continue the session</span>
+              <span className="block text-left type-body-sm font-normal text-primary-foreground/70">Log it and continue the session</span>
             </span>
             <ArrowRight size={17} />
           </Button>
@@ -889,13 +889,13 @@ export function HistoryPage() {
               data-testid={`row-history-${w.id}`}
             >
               <div className="flex gap-4">
-                <span className="font-data text-xs text-muted-foreground">
+                <span className="font-data type-caption text-muted-foreground">
                   {String(history.length - i).padStart(2, '0')}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-2xl font-semibold uppercase">{w.sessionName}</h2>
-                  <p className="text-xs text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p>
-                  <div className="mt-2 flex gap-5 font-data text-xs">
+                  <h2 className="type-section-heading">{w.sessionName}</h2>
+                  <p className="type-body-sm text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p>
+                  <div className="mt-2 flex gap-5 font-data type-caption">
                     <span><b className="text-foreground">{w.completedSets}</b> / {w.totalSets} sets</span>
                     {w.missedSets > 0 && <span className="text-destructive">{w.missedSets} missed</span>}
                     <span className="rounded-full bg-secondary/20 px-2 py-0.5 text-secondary">{w.attempts} attempts</span>
@@ -912,7 +912,7 @@ export function HistoryPage() {
           action={
             <Link
               href="/"
-              className="tap inline-flex min-h-12 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground"
+              className="tap inline-flex min-h-12 items-center rounded-lg bg-primary px-5 type-button text-primary-foreground"
               data-testid="link-history-start"
             >
               Go to Track <ArrowRight size={16} className="ml-2" />
