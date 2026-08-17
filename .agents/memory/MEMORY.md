@@ -1,0 +1,1 @@
+- [Lofte design system](design-system.md) — dark-first, Geist font, full colour token set and named type-scale utilities; never reintroduce a light theme.

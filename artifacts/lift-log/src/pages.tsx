@@ -185,7 +185,7 @@ export function WorkoutPage() {
             <p className="font-data text-[10px] uppercase tracking-[.2em] text-secondary">Rep {current.setNumber} of {current.totalSets}</p>
             <h2 className="mt-5 font-display text-6xl font-bold uppercase leading-[.8]">{exerciseLabels[current.exercise]}</h2>
             <div className="mt-8 flex flex-wrap items-end gap-x-8 gap-y-3">
-              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Load</p><p className="font-display text-6xl font-bold text-secondary">{current.weight}<span className="ml-2 text-2xl">kg</span></p></div>
+              <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Load</p><p className="text-workout-weight text-secondary">{current.weight}<span className="text-workout-weight-unit ml-3 opacity-70">kg</span></p></div>
               <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Reps</p><p className="font-display text-5xl font-bold">{current.reps}</p></div>
               <div><p className="font-data text-[10px] uppercase tracking-widest text-accent-foreground/65">Target</p><p className="font-display text-5xl font-bold">{current.percentage}%</p></div>
             </div>
