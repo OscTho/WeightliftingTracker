@@ -11,7 +11,7 @@
  *   ExerciseCompleteBanner — confirmation between exercises
  */
 
-import { ArrowRight, Check, TrendingUp, Trophy } from 'lucide-react';
+import { ArrowRight, Check, Pencil, TrendingUp, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { exerciseLabels } from '@/lib/utils';
 import type { ExerciseName } from '@workspace/api-client-react';
@@ -43,10 +43,12 @@ export interface WorkoutCurrentSetProps {
   weight: number;
   reps: number;
   percentage: number;
+  /** Called when the athlete taps the edit affordance on the weight. */
+  onEditWeight?: () => void;
 }
 
 export function WorkoutCurrentSet({
-  exercise, setNumber, totalSets, weight, reps, percentage
+  exercise, setNumber, totalSets, weight, reps, percentage, onEditWeight
 }: WorkoutCurrentSetProps) {
   return (
     <div className="relative overflow-hidden rounded-xl bg-elevated p-6 text-foreground">
@@ -69,7 +71,18 @@ export function WorkoutCurrentSet({
 
         {/* Weight — the dominant element */}
         <div className="mt-7">
-          <p className="font-data text-[9px] uppercase tracking-[.2em] text-foreground/50">Load</p>
+          <div className="flex items-center justify-between">
+            <p className="font-data text-[9px] uppercase tracking-[.2em] text-foreground/50">Load</p>
+            {onEditWeight && (
+              <button
+                type="button"
+                onClick={onEditWeight}
+                className="tap flex items-center gap-1.5 rounded border border-border px-2 py-1 font-data text-[10px] uppercase tracking-wider text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+              >
+                <Pencil size={10} /> edit
+              </button>
+            )}
+          </div>
           <p className="text-workout-weight text-secondary">
             {weight}
             <span className="text-workout-weight-unit ml-3 opacity-60">kg</span>

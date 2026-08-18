@@ -648,6 +648,16 @@ export function WorkoutPage() {
   const finish = useFinishWorkout();
   const [showMiss, setShowMiss] = useState(false);
   const [finishedExercise, setFinishedExercise] = useState<string | null>(null);
+  const [customWeight, setCustomWeight] = useState<number | null>(null);
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [draftWeight, setDraftWeight] = useState('');
+
+  // Reset overridden weight whenever the active set changes
+  const _currentSetId = q.data?.sets?.find((s) => s.status === 'pending')?.id;
+  useEffect(() => {
+    setCustomWeight(null);
+    setEditingWeight(false);
+  }, [_currentSetId]);
 
   if (q.isLoading) return <LoadingBlock />;
   if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />;
@@ -718,12 +728,11 @@ export function WorkoutPage() {
         })
     : [];
 
-  // Next exercise name (for exercise complete banner)
-  const nextExercise = current
-    ? (() => {
-        const nextPending = w.sets.find((s) => s.status === 'pending' && s.id !== current.id);
-        return nextPending && nextPending.exercise !== current.exercise ? exerciseLabels[nextPending.exercise] : null;
-      })()
+  // When the exercise-complete banner is visible, `current` already points to
+  // the first pending set of the NEXT exercise — so the banner's "next" label
+  // is simply current.exercise (not the exercise after that).
+  const nextExerciseName = finishedExercise
+    ? (current ? exerciseLabels[current.exercise] : null)
     : null;
 
   return (
@@ -766,7 +775,7 @@ export function WorkoutPage() {
       {finishedExercise ? (
         <ExerciseCompleteBanner
           exerciseName={finishedExercise}
-          nextExerciseName={nextExercise}
+          nextExerciseName={nextExerciseName}
           onContinue={() => setFinishedExercise(null)}
         />
       ) : current ? (
@@ -775,9 +784,13 @@ export function WorkoutPage() {
             exercise={current.exercise}
             setNumber={current.setNumber}
             totalSets={current.totalSets}
-            weight={current.weight}
+            weight={customWeight ?? current.weight}
             reps={current.reps}
             percentage={current.percentage}
+            onEditWeight={() => {
+              setDraftWeight(String(customWeight ?? current.weight));
+              setEditingWeight(true);
+            }}
           />
           <div className="mt-4 grid gap-3">
             <Button
@@ -819,6 +832,47 @@ export function WorkoutPage() {
           </Button>
         </div>
       )}
+
+      {/* Weight adjustment sheet */}
+      <BottomSheet
+        open={editingWeight}
+        onClose={() => setEditingWeight(false)}
+        title="Adjust load"
+        subtitle={current ? `Calculated: ${current.weight} kg · ${current.percentage}% of your ${exerciseLabels[current.exercise]} PB` : undefined}
+      >
+        <div className="mt-2 space-y-4">
+          <Input
+            label="Weight (kg)"
+            type="number"
+            min="0"
+            step="0.5"
+            value={draftWeight}
+            onChange={(e) => setDraftWeight(e.target.value)}
+            autoFocus
+          />
+          {customWeight !== null && (
+            <Button
+              variant="tertiary"
+              className="w-full"
+              onClick={() => { setCustomWeight(null); setEditingWeight(false); }}
+            >
+              Reset to calculated ({current?.weight} kg)
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              const v = parseFloat(draftWeight);
+              if (!isNaN(v) && v > 0) setCustomWeight(v);
+              setEditingWeight(false);
+            }}
+          >
+            <Check size={18} /> Confirm
+          </Button>
+        </div>
+      </BottomSheet>
 
       {/* Missed-set sheet */}
       <BottomSheet
