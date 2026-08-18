@@ -23,7 +23,14 @@ import {
   Router as WouterRouter,
 } from 'wouter';
 
-const queryClient = new QueryClient();
+// Disable React Query retries when running under Playwright (navigator.webdriver = true)
+// so error states resolve immediately rather than after 3× exponential-backoff retries.
+const isAutomated = typeof navigator !== 'undefined' && navigator.webdriver;
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: isAutomated ? 0 : 3 },
+  },
+});
 
 function StartWorkoutRoute() {
   const search = useSearch();
