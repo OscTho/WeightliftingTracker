@@ -31,6 +31,7 @@ import {
   GetWorkoutParams,
   GetWorkoutResponse,
   CompleteSetParams,
+  CompleteSetBody,
   CompleteSetResponse,
   MissSetParams,
   MissSetBody,
@@ -46,6 +47,9 @@ const asNumber = (value: string | number | null | undefined) =>
 
 const parseIdParam = (value: string | string[] | undefined) =>
   Number(Array.isArray(value) ? value[0] : value);
+
+const normalizeSessionNumbers = <T extends { sessionNumber: number }>(sessions: T[]) =>
+  sessions.map((session, index) => ({ ...session, sessionNumber: index + 1 }));
 
 function profileResponse(row: typeof athleteProfilesTable.$inferSelect): ProfileData {
   return {
@@ -121,16 +125,47 @@ function workoutResponse(row: typeof workoutsTable.$inferSelect): WorkoutData {
   };
 }
 
-function historyResponse(row: typeof workoutsTable.$inferSelect) {
+function historyResponse(
+  row: typeof workoutsTable.$inferSelect,
+  profile: ProfileData | null,
+) {
+  const sets = row.sets as WorkoutSet[];
+
+  const pbSets: { exercise: string; weight: number }[] = [];
+  if (profile) {
+    const pbs: Record<string, number> = {
+      snatch: profile.snatchPb,
+      clean_and_jerk: profile.cleanJerkPb,
+      back_squat: profile.backSquatPb,
+      front_squat: profile.frontSquatPb,
+    };
+    for (const s of sets) {
+      if (s.status === "completed" && s.weight > 0) {
+        const pb = pbs[s.exercise];
+        if (pb != null && s.weight >= pb) {
+          // Only add unique exercise+weight combos
+          const alreadyAdded = pbSets.some(
+            (p) => p.exercise === s.exercise && p.weight === s.weight,
+          );
+          if (!alreadyAdded) {
+            pbSets.push({ exercise: s.exercise, weight: s.weight });
+          }
+        }
+      }
+    }
+  }
+
   return {
     id: row.id,
     sessionName: row.sessionName,
     programmeName: row.programmeName,
     date: row.completedAt ?? row.startedAt,
     completedSets: row.completedSets,
-    totalSets: (row.sets as WorkoutSet[]).length,
+    totalSets: sets.length,
     missedSets: row.missedSets,
     attempts: row.attempts,
+    hasPb: pbSets.length > 0,
+    pbSets,
   };
 }
 
@@ -194,7 +229,7 @@ router.post("/programmes", async (req, res): Promise<void> => {
     name: parsed.data.name,
     sessionsPerWeek: parsed.data.sessionsPerWeek,
     lengthWeeks: parsed.data.lengthWeeks,
-    sessions: parsed.data.sessions,
+    sessions: normalizeSessionNumbers(parsed.data.sessions),
   }).returning();
   res.status(201).json(CreateProgrammeResponse.parse(programmeResponse(row)));
 });
@@ -224,7 +259,7 @@ router.put("/programmes/:programmeId", async (req, res): Promise<void> => {
     name: body.data.name,
     sessionsPerWeek: body.data.sessionsPerWeek,
     lengthWeeks: body.data.lengthWeeks,
-    sessions: body.data.sessions,
+    sessions: normalizeSessionNumbers(body.data.sessions),
     updatedAt: new Date(),
   }).where(eq(programmesTable.id, params.data.programmeId)).returning();
   if (!row) {
@@ -255,7 +290,8 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
     db.select().from(workoutsTable).orderBy(desc(workoutsTable.startedAt)).limit(3),
   ]);
   const detailedProgramme = programme ? programmeResponse(programme) : null;
-  const recentWorkouts = workouts.map(historyResponse);
+  const profileData = profile ? profileResponse(profile) : null;
+  const recentWorkouts = workouts.map((w) => historyResponse(w, profileData));
   const weeklyCompletedSets = workouts.reduce((total, workout) => total + workout.completedSets, 0);
   res.json(GetDashboardResponse.parse({
     profile: profile ? profileResponse(profile) : null,
@@ -267,8 +303,12 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
 });
 
 router.get("/history", async (_req, res): Promise<void> => {
-  const rows = await db.select().from(workoutsTable).orderBy(desc(workoutsTable.startedAt));
-  res.json(GetHistoryResponse.parse(rows.map(historyResponse)));
+  const [rows, profileRow] = await Promise.all([
+    db.select().from(workoutsTable).orderBy(desc(workoutsTable.startedAt)),
+    getProfileRow(),
+  ]);
+  const profileData = profileRow ? profileResponse(profileRow) : null;
+  res.json(GetHistoryResponse.parse(rows.map((r) => historyResponse(r, profileData))));
 });
 
 router.post("/workouts", async (req, res): Promise<void> => {
@@ -347,6 +387,11 @@ router.post("/workouts/:workoutId/sets/:setId/complete", async (req, res): Promi
     res.status(400).json({ error: params.error.message });
     return;
   }
+  const body = CompleteSetBody.safeParse(req.body ?? {});
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
   const row = await getWorkoutRow(params.data.workoutId);
   if (!row) {
     res.status(404).json({ error: "Workout not found" });
@@ -357,6 +402,16 @@ router.post("/workouts/:workoutId/sets/:setId/complete", async (req, res): Promi
   if (!set) {
     res.status(404).json({ error: "Set not found" });
     return;
+  }
+  if (body.data.weight !== undefined) {
+    set.weight = body.data.weight;
+    const nextSet = sets.find((item) =>
+      item.status === "pending" &&
+      item.exercise === set.exercise &&
+      item.id !== set.id &&
+      item.setNumber > set.setNumber,
+    );
+    if (nextSet) nextSet.weight = body.data.weight;
   }
   if (set.status !== "completed") {
     set.status = "completed";

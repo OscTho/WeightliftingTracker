@@ -6,12 +6,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import {
   DashboardPage,
-  HistoryPage,
-  ProfilePage,
   ProgrammeDetailPage,
-  ProgrammePage,
   WorkoutPage,
 } from '@/pages';
+import { HistoryPage, ProfilePage, ProgrammePage } from '@/pages/mobile-core-pages';
 import { DesignSystemPage } from '@/pages/design-system';
 import { Shell } from '@/components/shell';
 import { useStartWorkout } from '@workspace/api-client-react';

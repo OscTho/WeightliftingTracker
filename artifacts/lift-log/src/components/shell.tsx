@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'wouter';
-import { BarChart3, Clock, Layers, UserRound } from 'lucide-react';
+import { ClipboardList, Clock, PlayCircle, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 /**
@@ -8,8 +8,8 @@ import type { ReactNode } from 'react';
  * Programme, History, Profile are supporting destinations.
  */
 const items = [
-  { href: '/',          label: 'Track',     icon: BarChart3 },
-  { href: '/programme', label: 'Plans',     icon: Layers    },
+  { href: '/',          label: 'Track',     icon: PlayCircle },
+  { href: '/programme', label: 'Plans',     icon: ClipboardList },
   { href: '/history',   label: 'History',   icon: Clock     },
   { href: '/profile',   label: 'Profile',   icon: UserRound },
 ];
@@ -23,40 +23,22 @@ export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   return (
     <div className="grain min-h-[100dvh] bg-background">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-md">
-        <div className="flex h-14 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2.5" data-testid="link-brand">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-primary font-display text-lg font-semibold leading-none text-primary-foreground">L</span>
-            <span className="font-display text-xl font-semibold uppercase tracking-[.06em]">Lofte</span>
-          </Link>
-          <Link
-            href="/profile"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-elevated font-display text-sm font-semibold text-foreground"
-            aria-label="Profile"
-            data-testid="link-header-profile"
-          >
-            LO
-          </Link>
-        </div>
-      </header>
-
       {/* Page content */}
-      <main className="px-4 pb-28 pt-6">{children}</main>
+      <main className="mx-auto w-full max-w-[402px] pb-[105px]">{children}</main>
 
       {/* Bottom navigation */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-lg"
+        className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[402px] border border-border bg-background"
         aria-label="Main navigation"
       >
-        <div className="flex gap-1 px-2">
+        <div className="flex h-[76px] items-start justify-between gap-0 px-6 pt-3">
           {items.map(({ href, label, icon: Icon }) => {
             const active = isActive(href, location);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`tap flex min-h-12 flex-1 flex-col items-center justify-center gap-1 rounded-lg type-caption font-semibold transition-colors ${
+                className={`tap flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-2xl type-caption font-semibold transition-colors ${
                   active
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:text-foreground'
@@ -64,11 +46,14 @@ export function Shell({ children }: { children: ReactNode }) {
                 data-testid={`link-nav-${label.toLowerCase()}`}
                 aria-current={active ? 'page' : undefined}
               >
-                <Icon size={18} strokeWidth={active ? 2.5 : 1.8} aria-hidden="true" />
+                <Icon size={22} strokeWidth={active ? 2.2 : 1.8} aria-hidden="true" />
                 <span>{label}</span>
               </Link>
             );
           })}
+        </div>
+        <div className="flex h-7 items-start justify-center pb-2 pt-4">
+          <div className="h-[5px] w-[139px] rounded-full bg-muted-foreground" />
         </div>
       </nav>
     </div>

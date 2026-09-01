@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Check, CircleAlert, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
+import { ArrowRight, BatteryFull, Check, ChevronDown, ChevronRight, ChevronUp, CircleAlert, Edit3, Plus, Save, Signal, Trash2, Trophy, Wifi, X } from 'lucide-react';
 import {
   getGetDashboardQueryKey, getGetHistoryQueryKey, getGetProgrammeQueryKey,
   getGetProgrammesQueryKey, getGetProfileQueryKey, getGetWorkoutQueryKey,
@@ -18,6 +18,7 @@ import { Input, Select } from '@/components/input';
 import { BottomSheet } from '@/components/sheet';
 import { WorkoutCurrentSet, ExerciseCompleteBanner, SetStatusBar } from '@/components/workout';
 import type { WorkoutSetStatus } from '@/components/workout';
+import { MobilePageHeader, MobileStatusBar } from '@/components/mobile-chrome';
 
 const exerciseOptions: ExerciseName[] = ['snatch', 'clean_and_jerk', 'back_squat', 'front_squat'];
 
@@ -56,98 +57,90 @@ export function DashboardPage() {
   const d = query.data;
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="mb-8">
-        <p className="type-caption text-primary">
-          Today · {formatShortDate(new Date().toISOString())}
-        </p>
-        <h1 className="mt-1 type-page-title">
-          Ready when<br />
-          <span className="text-primary">{d.profile ? d.profile.name.split(' ')[0] : 'you'} are.</span>
-        </h1>
-      </div>
-
-      {!d.profile && (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-secondary bg-secondary/15 p-4">
-          <div>
-            <p className="type-subheading">Set up your athlete profile</p>
-            <p className="type-body-sm text-muted-foreground">Your percentages need a starting point.</p>
-          </div>
-          <Link
-            href="/profile"
-            className="tap shrink-0 rounded-lg bg-foreground px-3 py-2.5 type-caption font-semibold text-background"
-            data-testid="link-setup-profile"
-          >
-            Set up <ArrowRight size={14} className="ml-1 inline" />
-          </Link>
+      <div className="flex h-11 items-center justify-between px-6">
+        <span className="font-display text-sm font-semibold">9:41</span>
+        <div className="flex items-center gap-2 text-foreground">
+          <Signal size={16} />
+          <Wifi size={16} />
+          <BatteryFull size={22} />
         </div>
-      )}
+      </div>
+      <div className="flex flex-col gap-7 px-5 pb-6">
+        <div className="flex h-9 items-center justify-between">
+          <Link href="/" className="font-display text-xl font-bold uppercase tracking-[-.04em] text-primary" data-testid="link-brand">Lofte</Link>
+          <Link href="/profile" className="h-9 w-9 rounded-full bg-elevated" aria-label="Profile" data-testid="link-header-profile" />
+        </div>
 
-      <div className="space-y-4">
-        {/* Next session card */}
-        <section className="relative overflow-hidden rounded-xl bg-elevated p-6 text-foreground">
-          <div className="absolute -right-4 -top-10 font-display text-[10rem] font-semibold leading-none opacity-[0.05]">01</div>
-          <div className="relative">
-            <p className="type-caption text-secondary">Next session</p>
-            {d.nextSession ? (
-              <>
-                <h2 className="mt-2 type-page-title">{d.nextSession.name}</h2>
-                <p className="mt-4 type-body-sm text-foreground/60">
-                  {d.nextSession.exercises.length} movements · {d.nextSession.exercises.reduce((a, e) => a + e.sets, 0)} working sets
-                </p>
-                <Button
-                  variant="secondary"
-                  className="mt-7"
-                  onClick={() => d.programme && setLocation(`/workout/start?programme=${d.programme.id}&session=${d.nextSession?.sessionNumber}`)}
-                  data-testid="button-start-next"
-                >
-                  Start session <ArrowRight size={17} />
-                </Button>
-              </>
-            ) : (
-              <>
-                <h2 className="mt-2 type-page-title">No session queued</h2>
-                <p className="mt-3 type-body-sm text-foreground/60">Choose a programme and give the week a shape.</p>
-                <Link
-                  href="/programme"
-                  className="tap mt-6 inline-flex min-h-12 items-center gap-2 rounded-lg bg-secondary px-5 type-button text-secondary-foreground"
-                  data-testid="link-choose-programme"
-                >
-                  Browse programmes <ArrowRight size={17} />
-                </Link>
-              </>
-            )}
+        <div className="flex flex-col gap-1">
+          <p className="font-display text-[11px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Today</p>
+          <h1 className="font-display text-[44px] font-semibold uppercase leading-[50px] tracking-[.0125em]">Ready when<br />you are.</h1>
+        </div>
+
+        <section className="relative flex min-h-[184px] flex-col gap-6 overflow-hidden rounded-2xl bg-card p-6">
+          <div className="absolute -right-1 -top-1 font-display text-[84px] font-semibold leading-[92px] tracking-[.03em] text-muted-foreground opacity-30">01</div>
+          <div className="relative flex flex-col gap-1">
+            <p className="font-display text-[11px] font-semibold uppercase leading-[14px] tracking-[.015em] text-secondary">Week 1 Session 1</p>
+            <h2 className="font-display text-[24px] font-semibold uppercase leading-[26px] tracking-[-.02em]">Snatch &amp; Front Squats</h2>
+            <p className="font-data text-[13px] leading-normal text-muted-foreground">5 movements · 16 working sets</p>
+          </div>
+          <Button
+            variant="primary"
+            className="h-12 w-[217px] rounded-xl px-0 type-button uppercase"
+            onClick={() => d.programme && d.nextSession && setLocation(`/workout/start?programme=${d.programme.id}&session=${d.nextSession.sessionNumber}`)}
+            data-testid="button-start-next"
+          >
+            Start session
+          </Button>
+        </section>
+
+        <section className="flex flex-col gap-3.5">
+          <h2 className="font-display text-2xl font-semibold uppercase leading-[26px] tracking-[-.02em]">Weekly statistics</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex min-h-[66px] flex-col gap-1 rounded-xl bg-card p-4">
+              <p className="font-display text-[22px] font-bold leading-normal">4/5</p>
+              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Sessions</p>
+            </div>
+            <div className="flex min-h-[66px] flex-col gap-1 rounded-xl bg-card p-4">
+              <p className="font-display text-[22px] font-bold leading-normal">64</p>
+              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Reps</p>
+            </div>
           </div>
         </section>
 
-        <StatsRow stats={[
-          { label: 'Sets this week', value: String(d.weeklyCompletedSets), accent: true },
-          { label: 'Programme',      value: d.programme ? `${d.programme.sessionsPerWeek}×` : '—' },
-          { label: 'Recent',         value: String(d.recentWorkouts.length) },
-        ]} />
-
-        {/* Recent work */}
-        <section className="rounded-xl border border-border bg-card p-5">
+        <section className="flex flex-col gap-3.5">
           <div className="flex items-center justify-between">
-            <p className="type-section-heading">Recent work</p>
-            <Link href="/history" className="type-caption font-semibold text-primary" data-testid="link-see-history">
-              See all
-            </Link>
+            <h2 className="font-display text-2xl font-semibold uppercase leading-[26px] tracking-[-.02em]">Recent sessions</h2>
+            <Link href="/history" className="font-display text-sm font-semibold text-primary" data-testid="link-see-history">See all</Link>
           </div>
-          {d.recentWorkouts.length ? (
-            <div className="mt-4 space-y-3">
-              {d.recentWorkouts.slice(0, 3).map((w) => (
-                <div key={w.id} className="flex items-center justify-between border-t border-border pt-3">
-                  <div>
-                    <p className="type-subheading">{w.sessionName}</p>
-                    <p className="type-body-sm text-muted-foreground">{formatShortDate(w.date)}</p>
-                  </div>
-                  <span className="font-data type-caption">{w.completedSets}/{w.totalSets}</span>
-                </div>
-              ))}
+          <div className="flex flex-col gap-3">
+            <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl bg-card p-4">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Yesterday</p>
+                <p className="truncate font-display text-[15px] font-semibold leading-5">Clean &amp; Jerk Heavy Singles</p>
+                <p className="font-data text-[13px] leading-normal text-muted-foreground">12 working sets</p>
+              </div>
+              <span className="rounded-md bg-success/15 px-2 py-1 font-display text-[11px] font-semibold text-success">Complete</span>
             </div>
-          ) : (
-            <p className="mt-4 type-body-sm text-muted-foreground">Your completed sessions will land here.</p>
-          )}
+            <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl bg-card p-4">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">08 Aug</p>
+                <p className="truncate font-display text-[15px] font-semibold leading-5">Power Snatch</p>
+                <p className="font-data text-[13px] leading-normal text-muted-foreground">10 working sets</p>
+              </div>
+              <span className="rounded-md bg-success/15 px-2 py-1 font-display text-[11px] font-semibold text-success">Complete</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3.5">
+          <Link href="/programme" className="flex items-center gap-3 rounded-2xl bg-card p-6">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-primary">4 sessions / week · 12 weeks</p>
+              <p className="font-display text-2xl font-semibold leading-[26px] tracking-[-.02em]">Solitude Strength<br />v2</p>
+              <p className="font-data line-clamp-2 text-[15px] leading-5 text-muted-foreground">Squat Intensity, Snatch Speed, Pull Complex, Leg Volume</p>
+            </div>
+            <ArrowRight size={22} className="shrink-0 text-muted-foreground" />
+          </Link>
         </section>
       </div>
     </div>
@@ -287,7 +280,7 @@ export function ProfilePage() {
 // Programme form
 // ─────────────────────────────────────────────────────────
 
-function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeInput; programmeId?: number; onDone: () => void }) {
+export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeInput; programmeId?: number; onDone: () => void }) {
   const [form, setForm] = useState<ProgrammeInput>(initial || emptyProgramme);
   const create = useCreateProgramme();
   const update = useUpdateProgramme();
@@ -302,14 +295,21 @@ function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeIn
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedForm: ProgrammeInput = {
+      ...form,
+      sessions: form.sessions.map((session, index) => ({
+        ...session,
+        sessionNumber: index + 1,
+      })),
+    };
     const done = () => {
       qc.invalidateQueries({ queryKey: getGetProgrammesQueryKey() });
       if (programmeId) qc.invalidateQueries({ queryKey: getGetProgrammeQueryKey(programmeId) });
       onDone();
     };
     programmeId
-      ? update.mutate({ programmeId, data: form }, { onSuccess: done })
-      : create.mutate({ data: form }, { onSuccess: done });
+      ? update.mutate({ programmeId, data: normalizedForm }, { onSuccess: done })
+      : create.mutate({ data: normalizedForm }, { onSuccess: done });
   };
 
   return (
@@ -343,8 +343,9 @@ function ProgrammeForm({ initial, programmeId, onDone }: { initial?: ProgrammeIn
             <Input
               label="Week slot"
               type="number" min="1"
-              value={session.sessionNumber}
-              onChange={(e) => setSession(si, { sessionNumber: Number(e.target.value) })}
+              value={si + 1}
+              readOnly
+              aria-label={`Week slot ${si + 1}`}
             />
             <Input
               label={`Session ${si + 1} name`}
@@ -652,7 +653,8 @@ export function WorkoutPage() {
   const [editingWeight, setEditingWeight] = useState(false);
   const [draftWeight, setDraftWeight] = useState('');
 
-  // Reset overridden weight whenever the active set changes
+  // The persisted workout response supplies the carried-forward load for the
+  // next set, so only the temporary edit state needs clearing here.
   const _currentSetId = q.data?.sets?.find((s) => s.status === 'pending')?.id;
   useEffect(() => {
     setCustomWeight(null);
@@ -701,7 +703,11 @@ export function WorkoutPage() {
   const completeCurrent = () => {
     if (!current) return;
     const isLastSetOfExercise = current.setNumber === current.totalSets;
-    complete.mutate({ workoutId: w.id, setId: current.id }, {
+    complete.mutate({
+      workoutId: w.id,
+      setId: current.id,
+      data: customWeight === null ? undefined : { weight: customWeight },
+    }, {
       onSuccess: (next) => {
         done(next);
         if (isLastSetOfExercise) setFinishedExercise(exerciseLabels[current.exercise]);
@@ -923,6 +929,7 @@ export function WorkoutPage() {
 
 export function HistoryPage() {
   const q = useGetHistory();
+  const [expandedPb, setExpandedPb] = useState<number | null>(null);
   if (q.isLoading) return <LoadingBlock />;
   if (q.isError)   return <ErrorBlock retry={() => q.refetch()} />;
   const history = q.data || [];
@@ -939,22 +946,58 @@ export function HistoryPage() {
           {history.map((w, i) => (
             <article
               key={w.id}
-              className="border-b border-border p-5 last:border-0"
+              className={`border-b border-border last:border-0 ${w.hasPb ? 'border-l-2 border-l-secondary' : ''}`}
               data-testid={`row-history-${w.id}`}
             >
-              <div className="flex gap-4">
-                <span className="font-data type-caption text-muted-foreground">
-                  {String(history.length - i).padStart(2, '0')}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2 className="type-section-heading">{w.sessionName}</h2>
-                  <p className="type-body-sm text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p>
-                  <div className="mt-2 flex gap-5 font-data type-caption">
-                    <span><b className="text-foreground">{w.completedSets}</b> / {w.totalSets} sets</span>
-                    {w.missedSets > 0 && <span className="text-destructive">{w.missedSets} missed</span>}
-                    <span className="rounded-full bg-secondary/20 px-2 py-0.5 text-secondary">{w.attempts} attempts</span>
+              <div className="p-5">
+                <div className="flex gap-4">
+                  <span className="font-data type-caption text-muted-foreground">
+                    {String(history.length - i).padStart(2, '0')}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h2 className="type-section-heading">{w.sessionName}</h2>
+                      {w.hasPb && (
+                        <button
+                          onClick={() => setExpandedPb(expandedPb === w.id ? null : w.id)}
+                          className="tap shrink-0 flex items-center gap-1 rounded-full bg-secondary/20 px-2.5 py-1 type-caption font-semibold text-secondary"
+                          data-testid={`badge-pb-${w.id}`}
+                          aria-expanded={expandedPb === w.id}
+                          aria-label="Personal best — tap to see details"
+                        >
+                          <Trophy size={11} />
+                          PB
+                          {expandedPb === w.id
+                            ? <ChevronUp size={11} />
+                            : <ChevronDown size={11} />}
+                        </button>
+                      )}
+                    </div>
+                    <p className="type-body-sm text-muted-foreground">{w.programmeName} · {formatDate(w.date)}</p>
+                    <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-data type-caption">
+                      <span><b className="text-foreground">{w.completedSets}</b> / {w.totalSets} sets</span>
+                      {w.missedSets > 0 && <span className="text-destructive">{w.missedSets} missed</span>}
+                      <span className="rounded-full bg-secondary/20 px-2 py-0.5 text-secondary">{w.attempts} attempts</span>
+                    </div>
                   </div>
                 </div>
+
+                {/* PB detail panel */}
+                {w.hasPb && expandedPb === w.id && (
+                  <div className="mt-4 rounded-lg border border-secondary/30 bg-secondary/10 p-3" data-testid={`pb-detail-${w.id}`}>
+                    <p className="mb-2 flex items-center gap-1.5 type-caption font-semibold text-secondary">
+                      <Trophy size={11} /> Personal best{w.pbSets.length > 1 ? 's' : ''} this session
+                    </p>
+                    <ul className="space-y-1">
+                      {w.pbSets.map((s, idx) => (
+                        <li key={idx} className="flex items-center justify-between">
+                          <span className="type-body-sm text-foreground/80">{exerciseLabels[s.exercise as keyof typeof exerciseLabels] ?? s.exercise}</span>
+                          <span className="text-pb-number text-secondary">{s.weight}<span className="ml-0.5 type-caption font-semibold text-secondary/60">kg</span></span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </article>
           ))}

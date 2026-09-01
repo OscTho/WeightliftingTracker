@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Lofte Mobile"
+description = "A native mobile companion for the Lofte weightlifting platform. Lets athletes log sets directly from their phone during gym sessions — start a workout, complete or miss sets, and finish — using the same dark design system (Lofte red, achievement gold) and connecting to the same API server as the web app."
+version = "1.0.0"
+id = "artifacts/lofte-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 23986
+
+[services.development]
+run = "pnpm --filter @workspace/lofte-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lofte-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/lofte-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "23986"
+BASE_PATH = "/mobile/"

@@ -196,6 +196,12 @@ paths:
       operationId: completeSet
       tags: [workouts]
       summary: Mark a set complete
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteSetInput"
       responses:
         "200":
           description: Updated workout
@@ -373,6 +379,11 @@ components:
       properties:
         programmeId: { type: integer }
         sessionNumber: { type: integer, minimum: 1 }
+    CompleteSetInput:
+      type: object
+      description: Optional actual load used for the set. When supplied, the next pending set of the same exercise uses this load.
+      properties:
+        weight: { type: number, minimum: 0 }
     WorkoutSet:
       type: object
       required: [id, exercise, setNumber, totalSets, reps, percentage, weight, status, attemptNumber]
@@ -409,9 +420,15 @@ components:
         sets:
           type: array
           items: { $ref: "#/components/schemas/WorkoutSet" }
+    PbSet:
+      type: object
+      required: [exercise, weight]
+      properties:
+        exercise: { $ref: "#/components/schemas/ExerciseName" }
+        weight: { type: number }
     WorkoutSummary:
       type: object
-      required: [id, sessionName, programmeName, date, completedSets, totalSets, missedSets, attempts]
+      required: [id, sessionName, programmeName, date, completedSets, totalSets, missedSets, attempts, hasPb, pbSets]
       properties:
         id: { type: integer }
         sessionName: { type: string }
@@ -421,6 +438,10 @@ components:
         totalSets: { type: integer }
         missedSets: { type: integer }
         attempts: { type: integer }
+        hasPb: { type: boolean }
+        pbSets:
+          type: array
+          items: { $ref: "#/components/schemas/PbSet" }
     Dashboard:
       type: object
       required: [profile, programme, nextSession, recentWorkouts, weeklyCompletedSets]

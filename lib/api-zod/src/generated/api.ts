@@ -322,7 +322,12 @@ export const GetDashboardResponse = zod.object({
   "completedSets": zod.number().int(),
   "totalSets": zod.number().int(),
   "missedSets": zod.number().int(),
-  "attempts": zod.number().int()
+  "attempts": zod.number().int(),
+  "hasPb": zod.boolean(),
+  "pbSets": zod.array(zod.object({
+  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "weight": zod.number()
+}))
 })),
   "weeklyCompletedSets": zod.number().int()
 })
@@ -339,7 +344,12 @@ export const GetHistoryResponseItem = zod.object({
   "completedSets": zod.number().int(),
   "totalSets": zod.number().int(),
   "missedSets": zod.number().int(),
-  "attempts": zod.number().int()
+  "attempts": zod.number().int(),
+  "hasPb": zod.boolean(),
+  "pbSets": zod.array(zod.object({
+  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "weight": zod.number()
+}))
 })
 export const GetHistoryResponse = zod.array(GetHistoryResponseItem)
 
@@ -423,6 +433,14 @@ export const CompleteSetParams = zod.object({
   "workoutId": zod.coerce.number().int(),
   "setId": zod.coerce.number().int()
 })
+
+export const completeSetBodyWeightMin = 0;
+
+
+
+export const CompleteSetBody = zod.object({
+  "weight": zod.number().min(completeSetBodyWeightMin).optional()
+}).describe('Optional actual load used for the set. When supplied, the next pending set of the same exercise uses this load.')
 
 export const CompleteSetResponse = zod.object({
   "id": zod.number().int(),

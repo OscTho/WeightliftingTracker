@@ -22,6 +22,7 @@ import type {
 import type {
   AthleteProfile,
   AthleteProfileInput,
+  CompleteSetInput,
   Dashboard,
   HealthStatus,
   MissSetInput,
@@ -969,14 +970,15 @@ export const getCompleteSetUrl = (workoutId: number,
  * @summary Mark a set complete
  */
 export const completeSet = async (workoutId: number,
-    setId: number, options?: Parameters<typeof customFetch>[1]): Promise<Workout> => {
+    setId: number,
+    completeSetInput?: CompleteSetInput, options?: Parameters<typeof customFetch>[1]): Promise<Workout> => {
 
   return customFetch<Workout>(getCompleteSetUrl(workoutId,setId),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(completeSetInput)
   }
 );}
 
@@ -985,8 +987,8 @@ export const completeSet = async (workoutId: number,
 
 
 export const getCompleteSetMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number;data?: BodyType<CompleteSetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number;data?: BodyType<CompleteSetInput>}, TContext> => {
 
 const mutationKey = ['completeSet'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -998,10 +1000,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeSet>>, {workoutId: number;setId: number}> = (props) => {
-          const {workoutId,setId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeSet>>, {workoutId: number;setId: number;data?: BodyType<CompleteSetInput>}> = (props) => {
+          const {workoutId,setId,data} = props ?? {};
 
-          return  completeSet(workoutId,setId,requestOptions)
+          return  completeSet(workoutId,setId,data,requestOptions)
         }
 
 
@@ -1012,18 +1014,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type CompleteSetMutationResult = NonNullable<Awaited<ReturnType<typeof completeSet>>>
-
+    export type CompleteSetMutationBody = BodyType<CompleteSetInput> | undefined
     export type CompleteSetMutationError = ErrorType<unknown>
 
     /**
  * @summary Mark a set complete
  */
 export const useCompleteSet = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeSet>>, TError,{workoutId: number;setId: number;data?: BodyType<CompleteSetInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof completeSet>>,
         TError,
-        {workoutId: number;setId: number},
+        {workoutId: number;setId: number;data?: BodyType<CompleteSetInput>},
         TContext
       > => {
       return useMutation(getCompleteSetMutationOptions(options));

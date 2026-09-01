@@ -144,6 +144,14 @@ export interface StartWorkoutInput {
   sessionNumber: number;
 }
 
+/**
+ * Optional actual load used for the set. When supplied, the next pending set of the same exercise uses this load.
+ */
+export interface CompleteSetInput {
+  /** @minimum 0 */
+  weight?: number;
+}
+
 export type WorkoutSetStatus = typeof WorkoutSetStatus[keyof typeof WorkoutSetStatus];
 
 
@@ -192,6 +200,11 @@ export interface Workout {
   sets: WorkoutSet[];
 }
 
+export interface PbSet {
+  exercise: ExerciseName;
+  weight: number;
+}
+
 export interface WorkoutSummary {
   id: number;
   sessionName: string;
@@ -201,6 +214,8 @@ export interface WorkoutSummary {
   totalSets: number;
   missedSets: number;
   attempts: number;
+  hasPb: boolean;
+  pbSets: PbSet[];
 }
 
 export interface Dashboard {

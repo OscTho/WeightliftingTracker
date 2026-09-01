@@ -5,6 +5,7 @@
  * Olympic weightlifting workout tracking API
  * OpenAPI spec version: 0.1.0
  */
+import type { PbSet } from './pbSet';
 
 export interface WorkoutSummary {
   id: number;
@@ -15,4 +16,6 @@ export interface WorkoutSummary {
   totalSets: number;
   missedSets: number;
   attempts: number;
+  hasPb: boolean;
+  pbSets: PbSet[];
 }
