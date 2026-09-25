@@ -51,38 +51,36 @@ test.describe('ErrorBlock', () => {
   });
 });
 
-test.describe('EmptyBlock', () => {
-  test('renders with correct testid', async ({ page }) => {
+test.describe('Mobile empty states', () => {
+  test('programme empty state renders with current testid', async ({ page }) => {
     await setupMocks(page, { programmes: [] });
     await page.goto('/programme');
 
-    const empty = page.getByTestId('status-empty');
+    const empty = page.getByTestId('empty-current-programme');
     await expect(empty).toBeVisible();
   });
 
-  test('title uses type-section-heading class', async ({ page }) => {
-    await setupMocks(page, { history: [] });
-    await page.goto('/history');
-
-    const title = page.locator('[data-testid="status-empty"] .type-section-heading');
-    await expect(title).toBeVisible();
-    await expect(title).toContainText('Nothing logged yet');
-  });
-
-  test('detail uses type-body-sm class', async ({ page }) => {
+  test('programme empty state title is visible', async ({ page }) => {
     await setupMocks(page, { programmes: [] });
     await page.goto('/programme');
 
-    const detail = page.locator('[data-testid="status-empty"] .type-body-sm');
+    const title = page.getByTestId('empty-current-programme').getByText('No active programme');
+    await expect(title).toBeVisible();
+  });
+
+  test('programme empty state detail is visible', async ({ page }) => {
+    await setupMocks(page, { programmes: [] });
+    await page.goto('/programme');
+
+    const detail = page.getByTestId('empty-current-programme').getByText('Create your first training cycle to start planning sessions.');
     await expect(detail).toBeVisible();
   });
 
-  test('action slot renders CTA button', async ({ page }) => {
+  test('programme empty state renders create CTA', async ({ page }) => {
     await setupMocks(page, { programmes: [] });
     await page.goto('/programme');
 
-    // The "Build a programme" button is the action slot content
-    await expect(page.getByTestId('button-empty-new-programme')).toBeVisible();
+    await expect(page.getByTestId('button-new-programme')).toBeVisible();
   });
 });
 

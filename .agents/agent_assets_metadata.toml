@@ -1,0 +1,254 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "aFAoJz5iyb--gwkyKmXJx"
+uri = "file://artifacts/lift-log/public/brand/brand-preview.html"
+type = "text"
+title = "Updated Lofte brand preview"
+description = "Full logo system preview using the homepage Geist typeface."
+logical_id = "db9adc7e-7471-4db7-82e1-6e1f70fd5bef"
+content_hash = "sha256:51cddba13da18ed372b800be1692a311869ee1b86ed68f6619d55a17b758c36f"
+size = 8494
+mtime_ms = 1788357928635
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/db9adc7e-7471-4db7-82e1-6e1f70fd5bef/348e8b05-9c66-4288-99d2-c9f88a77696b"
+storage_version_token = "1788357976758261"
+content_type = "text/html"
+
+[[outputs]]
+id = "vPIUeH3cmj2qwvl3Yr8se"
+uri = "file://artifacts/lift-log/public/brand/lofte-icon.svg"
+type = "image"
+title = "Lofte circular icon"
+description = "Primary Lofte red icon with arrow cutout."
+logical_id = "9ce97143-810f-480d-945a-127dfb7e44c4"
+content_hash = "sha256:eb7a05012b802a83b6527bc29e307cef0cf55233bcb663bbc7d798d56882711e"
+size = 557
+mtime_ms = 1788356310166
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/9ce97143-810f-480d-945a-127dfb7e44c4/88de2945-d177-4888-9804-db5727d06670"
+storage_version_token = "1788357977507838"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "K6zvLz7kkvzfixbGjH0Gu"
+uri = "file://artifacts/lift-log/public/brand/lofte-wordmark.svg"
+type = "image"
+title = "LOFTE primary wordmark"
+description = "Default uppercase Geist wordmark in Lofte red."
+logical_id = "cd5a976d-658d-4b3c-8c8e-9245a87f32ab"
+content_hash = "sha256:6084cf6d270bbb9c4b62ebcf2925dbc576fbf7ee2e006f1d75d636861b4cd873"
+size = 385
+mtime_ms = 1788511415082
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/cd5a976d-658d-4b3c-8c8e-9245a87f32ab/2fa3508f-cc37-431b-843f-68c30331d5ec"
+storage_version_token = "1788512295858915"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "82jZTa6fSPGIx0gMZww4k"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-horizontal.svg"
+type = "image"
+title = "LOFTE horizontal lockup"
+description = "Default uppercase horizontal logo lockup."
+logical_id = "baaaa5f1-b157-4820-89c9-3b0ca4a8f551"
+content_hash = "sha256:164b1903299b6009506ff10cf142939d7fa1fd741b90f636de7bf2f7a6ab1f8b"
+size = 749
+mtime_ms = 1788511424263
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/baaaa5f1-b157-4820-89c9-3b0ca4a8f551/89eac01e-977d-4497-90e7-9a597044b9b9"
+storage_version_token = "1788512296619107"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "rooRn1Sc8Ua9NI4NJiKjA"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-stacked.svg"
+type = "image"
+title = "LOFTE stacked lockup"
+description = "Default uppercase stacked logo lockup."
+logical_id = "fcfd5559-1e96-47cf-bd12-d3c49c704a9e"
+content_hash = "sha256:8d996aed670d83746ee6d228cf14f43bf2adfa95c7f4a325f58eeffc776cfd52"
+size = 771
+mtime_ms = 1788511441926
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/fcfd5559-1e96-47cf-bd12-d3c49c704a9e/fa4bb8e7-6536-4b8c-9e8e-d0d7812df917"
+storage_version_token = "1788512297313953"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "GnBGM6Xej5_wg5-Crg5LF"
+uri = "file://artifacts/lift-log/public/brand/lofte-icon-mono.svg"
+type = "image"
+title = "Lofte icon ink version"
+description = "Single-colour icon for light surfaces and stamping."
+logical_id = "ecb2eb75-143e-4e17-a7e9-a235584f9747"
+content_hash = "sha256:ed137e364f4a35df782570bc5d281f8df22ab137ecdef17bc33482e69a00a541"
+size = 575
+mtime_ms = 1788356312125
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/ecb2eb75-143e-4e17-a7e9-a235584f9747/020d024c-5e97-43c2-bded-72759a42fee4"
+storage_version_token = "1788357980471324"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "WRCRUIf3IoBU9ggBE7fyU"
+uri = "file://artifacts/lift-log/public/brand/lofte-icon-reverse.svg"
+type = "image"
+title = "Lofte icon reverse version"
+description = "Single-colour icon for black and dark surfaces."
+logical_id = "fa3a4c33-5efc-4293-832b-759040e9dbaf"
+content_hash = "sha256:562480839022b3cbfbf5045e0d0b0b6450e2f419d525f4a7cc8f30d8926f6f87"
+size = 587
+mtime_ms = 1788356314103
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/fa3a4c33-5efc-4293-832b-759040e9dbaf/98ba2814-2d29-4328-9a67-427d0eb570db"
+storage_version_token = "1788357981234978"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "vXdnmkv8vWGFMWnhdq7dP"
+uri = "file://artifacts/lift-log/public/brand/lofte-wordmark-mono.svg"
+type = "image"
+title = "LOFTE monochrome wordmark"
+description = "Uppercase single-colour wordmark for light surfaces and stamping."
+logical_id = "7c5002be-3e02-4e26-85e9-580401f81b3a"
+content_hash = "sha256:ec1dfe7cda20acff90756d886cd9b1852144f0e737b073cc426296f7a57cc604"
+size = 411
+mtime_ms = 1788511416766
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/7c5002be-3e02-4e26-85e9-580401f81b3a/4a1f67a3-4179-49b7-8414-790afdabdb02"
+storage_version_token = "1788512297997518"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "Ye_xORFtv1mxdvKIIwqvT"
+uri = "file://artifacts/lift-log/public/brand/lofte-wordmark-reverse.svg"
+type = "image"
+title = "LOFTE reverse wordmark"
+description = "Uppercase off-white wordmark for dark backgrounds."
+logical_id = "8e6412cc-58e3-4a15-84c5-8576356c6b8d"
+content_hash = "sha256:26f84f8d3559b306c5743711e51e3254b8d0ed7f91887fb136ff0d3eadd43234"
+size = 423
+mtime_ms = 1788511419746
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/8e6412cc-58e3-4a15-84c5-8576356c6b8d/e761811e-bb6d-43bd-8d19-2f7478aed39a"
+storage_version_token = "1788512298665667"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "krVZhJyBFbgCpqRkU1ShX"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-horizontal-mono.svg"
+type = "image"
+title = "Lofte horizontal lockup monochrome"
+description = "Single-colour horizontal lockup for light surfaces."
+logical_id = "36fe59a4-ddef-47d1-b259-37a5d674defe"
+content_hash = "sha256:9ebbcd0a625f2a08f0c2a7b605dcafe5f65e905225b73a4e71717abd8b8a31d4"
+size = 812
+mtime_ms = 1788356317324
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/36fe59a4-ddef-47d1-b259-37a5d674defe/04319c2f-1a4f-4f13-8b51-427c213686a4"
+storage_version_token = "1788356379484651"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "c7I7uF12FPo3KRMQ2Fve7"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-horizontal-reverse.svg"
+type = "image"
+title = "Lofte horizontal lockup reverse"
+description = "Single-colour horizontal lockup for dark surfaces."
+logical_id = "00ae83f5-cba5-45fb-b907-0933ef33e70c"
+content_hash = "sha256:c5a7211e1a78eee0bf58552dfbda84747fc1947518bd36976966d556db00e4b8"
+size = 813
+mtime_ms = 1788356318567
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/00ae83f5-cba5-45fb-b907-0933ef33e70c/5aef0254-0c16-4aa6-a7b9-99d0e641c88c"
+storage_version_token = "1788356380191918"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "hCtKKaniy83gJS7qReZx_"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-stacked-mono.svg"
+type = "image"
+title = "Lofte stacked lockup monochrome"
+description = "Single-colour stacked lockup for light surfaces."
+logical_id = "1654a3b0-c1ef-4f77-bf64-a9d3735be71c"
+content_hash = "sha256:29c4255438ee896ac9932ef0254cb03b4a973da257f8a5e03d0099271b02e60d"
+size = 834
+mtime_ms = 1788356319976
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/1654a3b0-c1ef-4f77-bf64-a9d3735be71c/e4b76807-fcfe-492c-ba2e-a14046261e2f"
+storage_version_token = "1788356380928283"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "cHFCkYcAuJuGCaHBQYOFY"
+uri = "file://artifacts/lift-log/public/brand/lofte-lockup-stacked-reverse.svg"
+type = "image"
+title = "Lofte stacked lockup reverse"
+description = "Single-colour stacked lockup for dark surfaces."
+logical_id = "d8876687-e615-44a1-abb3-dc1efaa3dfa6"
+content_hash = "sha256:b10dbfba7e50758e49ecb7490d3aec6f00c47f350a72f899bf65d79edef880f1"
+size = 835
+mtime_ms = 1788356320476
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/d8876687-e615-44a1-abb3-dc1efaa3dfa6/dbdf2ba4-252c-4306-b668-87eb1f06d84d"
+storage_version_token = "1788356381647035"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "YZxzErr4C85LGIoANwqVF"
+uri = "file://screenshots/lofte-brand-final.jpg"
+type = "image"
+title = "Lofte brand preview screenshot"
+description = "Verified desktop view of the complete Lofte identity system."
+logical_id = "3072d533-f046-407d-9e21-4a6d95ba7b46"
+content_hash = "sha256:b546ac92546548e664060060f8a4ed411383dfbb4432ee8050b9419e9325a642"
+size = 79301
+mtime_ms = 1788356360502
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/3072d533-f046-407d-9e21-4a6d95ba7b46/08aaebdf-f2dd-4a82-8e5a-cee4495d5cb0"
+storage_version_token = "1788356382333685"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "WbtP9Yj0kqWVE3G-PxxMd"
+uri = "file://screenshots/lofte-design-page-brand.jpg"
+type = "image"
+title = "Lofte design page preview"
+description = "Verified mobile view of the logo assets embedded in the Lofte design system page."
+logical_id = "b30dc3ae-6850-4206-ac4b-bd82fd539a0a"
+content_hash = "sha256:b94193b68e82561c03e700ffb369fac8832dc9a2f1d152e7ec8844f3f438c38b"
+size = 61784
+mtime_ms = 1788357964619
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/b30dc3ae-6850-4206-ac4b-bd82fd539a0a/56ed2e83-fe94-4ace-bb66-c4741d192ba3"
+storage_version_token = "1788357981939328"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "LHoJVVtVW09BsB36A20Hw"
+uri = "file://screenshots/lofte-uppercase-comparison-full.jpg"
+type = "image"
+title = "Lofte lowercase versus uppercase comparison"
+description = "The design page showing the existing lowercase identity followed by the new Geist-based LOFTE uppercase exploration."
+logical_id = "27da4d13-575d-420b-aa95-832da61a8e80"
+content_hash = "sha256:6e6f20e88b036431c12d8cced6a682a742547a83eebf1e190b6cc3c9fc2d4f39"
+size = 115990
+mtime_ms = 1788509026219
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/27da4d13-575d-420b-aa95-832da61a8e80/2e3c0faa-daea-4c62-910c-a68725b9af1b"
+storage_version_token = "1788509045645586"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "gexAbLHrI134orXinVYuG"
+uri = "file://artifacts/lift-log/public/brand/lofte-wordmark-uppercase.svg"
+type = "image"
+title = "LOFTE uppercase wordmark"
+description = "Uppercase Geist wordmark exploration, without changing the current lowercase logo."
+logical_id = "48af97b9-91fc-46dc-8b37-e201af8c1b65"
+content_hash = "sha256:a6d61877ca023a732dc75e49bb0e6a7f9e27963492c46a14639a5ddd672d0ff4"
+size = 395
+mtime_ms = 1788508979938
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/48af97b9-91fc-46dc-8b37-e201af8c1b65/60023c27-c06c-44fc-bf6c-0f21154c7329"
+storage_version_token = "1788509046394581"
+content_type = "image/svg+xml"
+
+[[outputs]]
+id = "QjG2EP_fGm8rK4ADqTxfl"
+uri = "file://screenshots/lofte-uppercase-brand-sheet.jpg"
+type = "image"
+title = "LOFTE uppercase brand sheet"
+description = "Verified production preview of the uppercase logo family."
+logical_id = "dc5e9be6-fc80-4b82-a36a-81553ef3d803"
+content_hash = "sha256:99be9bab7c286f1caed5d793a2de3d64c1f87cf5ea665278142dcf286ed0a197"
+size = 77971
+mtime_ms = 1788512281930
+storage_uri = "gcs://replit-rams-assets-archer/rams/assets/repl:ba52ea87-f234-49e6-91ab-e5990b27fe09/dc5e9be6-fc80-4b82-a36a-81553ef3d803/d7086c1c-420e-4ea5-986c-1622ef2983e3"
+storage_version_token = "1788512294928233"
+content_type = "image/jpeg"

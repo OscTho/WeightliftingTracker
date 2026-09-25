@@ -1,2 +1,9 @@
 - [Lofte design system](design-system.md) — dark-first, Geist font, full colour token set and named type-scale utilities; never reintroduce a light theme.
 - [Lofte component library](component-library.md) — full set of reusable components built in src/components/; always import from there, never redefine inline.
+- [Expo React typings](expo-react-typings.md) — React 19.2 needs a typed compatibility boundary for gesture-handler root JSX children/style.
+- [Mockup preview E2E](mockup-preview-e2e.md) — browser tests must use the full artifact base path and settle the preview’s mount scroll before clicking controls.
+- [Auth state teardown](auth-state-teardown.md) — destructive auth transitions need a fresh auth-page load; cache clearing plus SPA navigation can retain a successful session observer.
+- [Expo SDK 57 compatibility](expo-sdk-57.md) — keep local Expo CLI aligned with SDK 57; use the splash plugin, and Android Expo Go 57 is device-verified.
+- [React Query production deduplication](react-query-deduplication.md) — keep React Query deduped in Vite when shared workspace clients can resolve a second peer-bound copy.
+- [Ephemeral PostgreSQL tests](ephemeral-postgres-tests.md) — local temporary clusters need a socket directory under their writable data directory.
+- [GitHub workflow push permission](github-workflow-push-permission.md) — repo write access alone may not allow pushing new Actions workflows; check workflow-specific grants.

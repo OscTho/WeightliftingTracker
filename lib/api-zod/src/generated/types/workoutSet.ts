@@ -5,17 +5,20 @@
  * Olympic weightlifting workout tracking API
  * OpenAPI spec version: 0.1.0
  */
+import type { AccessoryEquipment } from './accessoryEquipment';
 import type { ExerciseName } from './exerciseName';
 import type { WorkoutSetStatus } from './workoutSetStatus';
 
 export interface WorkoutSet {
+  movementId?: string;
   id: number;
   exercise: ExerciseName;
   setNumber: number;
   totalSets: number;
   reps: number;
-  percentage: number;
+  percentage?: number;
   weight: number;
+  equipment?: AccessoryEquipment;
   status: WorkoutSetStatus;
   attemptNumber: number;
   /** @nullable */

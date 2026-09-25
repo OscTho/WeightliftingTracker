@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupMocks, PROGRAMME_SUMMARY, PROGRAMME } from './fixtures';
+import { setupMocks, PROGRAMME_SUMMARY, PROGRAMME, CUSTOM_MOVEMENT } from './fixtures';
 
 test.describe('Programme list', () => {
   test('loading state — skeleton visible', async ({ page }) => {
@@ -17,13 +17,13 @@ test.describe('Programme list', () => {
     await expect(page.getByTestId('button-retry')).toBeVisible();
   });
 
-  test('empty state — EmptyBlock with build CTA', async ({ page }) => {
+  test('empty state — mobile programme card and create CTA', async ({ page }) => {
     await setupMocks(page, { programmes: [] });
     await page.goto('/programme');
 
-    await expect(page.getByTestId('status-empty')).toBeVisible();
-    await expect(page.getByText('No programme yet')).toBeVisible();
-    await expect(page.getByTestId('button-empty-new-programme')).toBeVisible();
+    await expect(page.getByTestId('empty-current-programme')).toBeVisible();
+    await expect(page.getByText('No active programme')).toBeVisible();
+    await expect(page.getByTestId('button-new-programme')).toBeVisible();
   });
 
   test('with programmes — cards rendered with correct data', async ({ page }) => {
@@ -34,9 +34,8 @@ test.describe('Programme list', () => {
     await expect(card).toBeVisible();
     // DOM text is original case; CSS applies uppercase visually
     await expect(card.getByText('Bulgarian Method')).toBeVisible();
-    // Stats
-    await expect(card.getByText('5×')).toBeVisible();
-    await expect(card.getByText('8w')).toBeVisible();
+    // Programme stats
+    await expect(card.getByText('5 sessions / week · 8 weeks')).toBeVisible();
     // Link to detail
     await expect(page.getByTestId(`link-programme-${PROGRAMME_SUMMARY.id}`)).toBeVisible();
   });
@@ -46,19 +45,145 @@ test.describe('Programme list', () => {
     await page.goto('/programme');
 
     await page.getByTestId('button-new-programme').click();
-    // Use testid to avoid ambiguity between button text and form heading
-    await expect(page.getByTestId('button-close-programme-form')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close programme form' })).toBeVisible();
     await expect(page.getByTestId('button-save-programme')).toBeVisible();
     await expect(page.getByTestId('button-add-session')).toBeVisible();
   });
 
-  test('page title h1 has type-page-title class', async ({ page }) => {
+  test('quick-pick shows all seven common movements and selects each one', async ({ page }) => {
+    await setupMocks(page, { programmes: [] });
+    await page.goto('/programme');
+    await page.getByTestId('button-new-programme').click();
+
+    const quickChoices = [
+      'Snatch',
+      'Clean',
+      'Jerk',
+      'Back Squat',
+      'Front Squat',
+      'Clean Pull',
+      'Snatch Pull',
+    ];
+    const addMovement = page.getByTestId('button-add-exercise-0');
+
+    await addMovement.click();
+    for (const movement of quickChoices) {
+      const choice = page.getByRole('button', { name: movement, exact: true });
+      await expect(choice).toBeVisible();
+      await choice.click();
+      await expect(page.getByText(movement, { exact: true }).last()).toBeVisible();
+      if (movement !== quickChoices[quickChoices.length - 1]) await addMovement.click();
+    }
+  });
+
+  test('movement library searches and filters by category', async ({ page }) => {
+    await setupMocks(page, { programmes: [] });
+    await page.goto('/programme');
+    await page.getByTestId('button-new-programme').click();
+    await page.getByTestId('button-add-exercise-0').click();
+    await page.getByRole('button', { name: 'Explore movement library', exact: true }).click();
+
+    const library = page.getByRole('dialog', { name: 'Movement library' });
+    const search = library.getByRole('textbox', { name: 'Search movements' });
+    await search.fill('power snatch');
+    await expect(library.getByRole('button', { name: /^Power Snatch/ })).toBeVisible();
+    await expect(library.getByRole('button', { name: /^Power Clean/ })).toHaveCount(0);
+
+    await search.fill('');
+    await library.getByRole('button', { name: 'Squats', exact: true }).click();
+    await expect(library.getByRole('button', { name: /^Back Squat/ })).toBeVisible();
+    await expect(library.getByRole('button', { name: /^Front Squat/ })).toBeVisible();
+    await expect(library.getByRole('button', { name: /^Power Snatch/ })).toHaveCount(0);
+  });
+
+  test('custom movement is created and immediately selected', async ({ page }) => {
+    await setupMocks(page, { programmes: [], createMovement: CUSTOM_MOVEMENT });
+    await page.goto('/programme');
+    await page.getByTestId('button-new-programme').click();
+    await page.getByTestId('button-add-exercise-0').click();
+    await page.getByRole('button', { name: 'Explore movement library', exact: true }).click();
+
+    const library = page.getByRole('dialog', { name: 'Movement library' });
+    await library.getByRole('button', { name: 'Add new movement', exact: true }).click();
+    const customForm = page.getByRole('dialog', { name: 'Add new movement' });
+    await customForm.getByRole('textbox', { name: 'Movement name' }).fill(CUSTOM_MOVEMENT.name);
+    await customForm.getByLabel('Category').selectOption(CUSTOM_MOVEMENT.category);
+    await customForm.getByRole('textbox', { name: 'Description (optional)' }).fill(CUSTOM_MOVEMENT.description);
+    await customForm.getByRole('button', { name: 'Add movement', exact: true }).click();
+
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByText(CUSTOM_MOVEMENT.name, { exact: true })).toBeVisible();
+  });
+
+  test('selected movement id is persisted in the programme request', async ({ page }) => {
+    let savedProgramme: { sessions: Array<{ exercises: Array<{ movementId?: string; exercise?: string }> }> } | undefined;
+    await setupMocks(page, { programmes: [] });
+    await page.route(/\/api\/programmes$/, async (route) => {
+      if (route.request().method() === 'POST') {
+        savedProgramme = route.request().postDataJSON();
+        await route.fulfill({ status: 201, body: JSON.stringify(PROGRAMME), contentType: 'application/json' });
+        return;
+      }
+      await route.fallback();
+    });
+    await page.goto('/programme');
+    await page.getByTestId('button-new-programme').click();
+    await page.getByTestId('button-add-exercise-0').click();
+    await page.getByRole('button', { name: 'Explore movement library', exact: true }).click();
+    const library = page.getByRole('dialog', { name: 'Movement library' });
+    await library.getByRole('button', { name: /^Hang Snatch/ }).click();
+    await page.getByTestId('button-save-programme').click();
+
+    await expect.poll(() => savedProgramme?.sessions[0]?.exercises.at(-1)?.movementId).toBe('hang_snatch');
+    expect(savedProgramme?.sessions[0]?.exercises.at(-1)?.exercise).toBeUndefined();
+  });
+
+  test('accessory movements use direct weight and equipment instead of percentage', async ({ page }) => {
+    let savedProgramme: {
+      sessions: Array<{
+        exercises: Array<{
+          movementId?: string;
+          percentage?: number;
+          weight?: number;
+          equipment?: string;
+        }>;
+      }>;
+    } | undefined;
+    await setupMocks(page, { programmes: [] });
+    await page.route(/\/api\/programmes$/, async (route) => {
+      if (route.request().method() === 'POST') {
+        savedProgramme = route.request().postDataJSON();
+        await route.fulfill({ status: 201, body: JSON.stringify(PROGRAMME), contentType: 'application/json' });
+        return;
+      }
+      await route.fallback();
+    });
+    await page.goto('/programme');
+    await page.getByTestId('button-new-programme').click();
+    await page.getByTestId('button-add-exercise-0').click();
+    await page.getByRole('button', { name: 'Explore movement library', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Movement library' }).getByRole('button', { name: /^Deadlift/ }).click();
+
+    await expect(page.getByTestId('input-percentage-0-2')).toHaveCount(0);
+    await page.getByTestId('input-accessory-weight-0-2').fill('32');
+    await page.getByTestId('select-accessory-equipment-0-2').selectOption('dumbbell');
+    await page.getByTestId('button-save-programme').click();
+
+    await expect.poll(() => savedProgramme?.sessions[0]?.exercises.at(-1)).toMatchObject({
+      movementId: 'deadlift',
+      weight: 32,
+      equipment: 'dumbbell',
+    });
+    expect(savedProgramme?.sessions[0]?.exercises.at(-1)?.percentage).toBeUndefined();
+  });
+
+  test('page title uses the mobile display styles', async ({ page }) => {
     await setupMocks(page, { programmes: [] });
     await page.goto('/programme');
 
     const h1 = page.getByRole('heading', { level: 1 });
-    await expect(h1).toHaveClass(/type-page-title/);
-    // CSS uppercases "Programme room." visually; DOM text is original
+    await expect(h1).toHaveClass(/font-display/);
+    await expect(h1).toHaveCSS('font-size', '44px');
     await expect(h1).toContainText('Programme room.');
   });
 

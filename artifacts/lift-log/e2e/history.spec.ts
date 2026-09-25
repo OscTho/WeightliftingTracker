@@ -17,14 +17,11 @@ test.describe('History', () => {
     await expect(page.getByTestId('button-retry')).toBeVisible();
   });
 
-  test('empty state — EmptyBlock with go-to-track CTA', async ({ page }) => {
+  test('empty state — mobile history message is visible', async ({ page }) => {
     await setupMocks(page, { history: [] });
     await page.goto('/history');
 
-    await expect(page.getByTestId('status-empty')).toBeVisible();
-    await expect(page.getByText('Nothing logged yet')).toBeVisible();
-    await expect(page.getByTestId('link-history-start')).toBeVisible();
-    await expect(page.getByTestId('link-history-start')).toContainText('Go to Track');
+    await expect(page.getByText('No sessions recorded yet.')).toBeVisible();
   });
 
   test('with data — workout rows rendered with correct content', async ({ page }) => {
@@ -35,31 +32,32 @@ test.describe('History', () => {
     await expect(page.getByTestId(`row-history-${HISTORY_ITEMS[0].id}`)).toBeVisible();
     await expect(page.getByTestId(`row-history-${HISTORY_ITEMS[1].id}`)).toBeVisible();
 
-    // First row — session name (DOM text; CSS uppercases)
+    // First row — session name
     const firstRow = page.getByTestId(`row-history-${HISTORY_ITEMS[0].id}`);
-    await expect(firstRow.locator('.type-section-heading')).toContainText('Snatch Focus');
-    await expect(firstRow.getByText('Bulgarian Method')).toBeVisible();
+    await expect(firstRow.getByText('Snatch Focus', { exact: true })).toBeVisible();
+    await expect(firstRow.getByText('8 working sets')).toBeVisible();
 
     // Second row shows missed sets count
     const secondRow = page.getByTestId(`row-history-${HISTORY_ITEMS[1].id}`);
-    await expect(secondRow.getByText('2 missed')).toBeVisible();
+    await expect(secondRow.getByText('2 MISSED')).toBeVisible();
   });
 
   test('with data — set counts visible', async ({ page }) => {
     await setupMocks(page, { history: HISTORY_ITEMS });
     await page.goto('/history');
 
-    // "8 / 8 sets" appears in first row
-    await expect(page.locator('[data-testid^="row-history"]').first().getByText(/8.*8 sets/)).toBeVisible();
+    // Working set count appears in the first mobile row
+    await expect(page.locator('[data-testid^="row-history"]').first().getByText('8 working sets')).toBeVisible();
   });
 
-  test('page title h1 has type-page-title class — DOM text original case', async ({ page }) => {
+  test('page title uses the mobile display styles', async ({ page }) => {
     await setupMocks(page, { history: [] });
     await page.goto('/history');
 
     const h1 = page.getByRole('heading', { level: 1 });
-    await expect(h1).toHaveClass(/type-page-title/);
-    await expect(h1).toContainText('The work stays.');
+    await expect(h1).toHaveClass(/font-display/);
+    await expect(h1).toHaveCSS('font-size', '44px');
+    await expect(h1).toContainText('History.');
   });
 
   test('history nav item is active', async ({ page }) => {
@@ -69,12 +67,12 @@ test.describe('History', () => {
     await expect(page.getByTestId('link-nav-history')).toHaveClass(/bg-primary/);
   });
 
-  test('history rows use type-section-heading for session names', async ({ page }) => {
+  test('history rows use mobile session text', async ({ page }) => {
     await setupMocks(page, { history: HISTORY_ITEMS });
     await page.goto('/history');
 
-    // One section heading per workout row
-    const headings = page.locator('[data-testid^="row-history"] .type-section-heading');
-    await expect(headings).toHaveCount(HISTORY_ITEMS.length);
+    for (const workout of HISTORY_ITEMS) {
+      await expect(page.getByTestId(`row-history-${workout.id}`).getByText(workout.sessionName, { exact: true })).toHaveClass(/font-display/);
+    }
   });
 });

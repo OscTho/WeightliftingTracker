@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lofte / brand preview</title>
+  <style>
+     @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
+     :root {
+      --red: #D84B32;
+      --ink: #111312;
+      --paper: #F4F0E9;
+      --line: #d8d1c6;
+      --muted: #756f67;
+       --font: "Geist", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 56px 28px 88px; }
+    header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 42px; border-bottom: 1px solid var(--line); }
+    .eyebrow { margin: 0 0 12px; color: var(--red); font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(42px, 8vw, 88px); line-height: .84; letter-spacing: -.08em; font-weight: 800; }
+    .intro { max-width: 350px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    section { padding-top: 46px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
+    h2 { margin: 0; font-size: 18px; letter-spacing: -.035em; }
+    .section-note { margin: 0; color: var(--muted); font-size: 12px; }
+    .deliverable { display: grid; grid-template-columns: 180px 1fr 1fr; min-height: 150px; border-top: 1px solid var(--line); }
+    .deliverable:last-child { border-bottom: 1px solid var(--line); }
+    .label { padding: 18px 18px 18px 0; }
+    .label strong { display: block; font-size: 14px; letter-spacing: -.02em; }
+    .label code { display: block; margin-top: 8px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+    .sample { position: relative; display: flex; align-items: center; justify-content: center; min-height: 150px; padding: 26px; }
+    .sample.dark { background: var(--ink); }
+    .sample.light { background: var(--paper); border-left: 1px solid var(--line); }
+    .sample img { display: block; width: 100%; max-width: 290px; max-height: 112px; object-fit: contain; }
+    .sample.icon img { max-width: 112px; max-height: 112px; }
+    .sample.stacked { min-height: 260px; }
+    .sample.stacked img { max-height: 220px; }
+    .swatch-label { position: absolute; top: 12px; left: 14px; color: #aaa39a; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; }
+    .sample.light .swatch-label { color: #908980; }
+    footer { display: flex; justify-content: space-between; gap: 24px; padding-top: 28px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    footer span:last-child { text-align: right; }
+    @media (max-width: 700px) {
+      main { padding: 34px 18px 56px; }
+      header { display: block; }
+      .intro { margin-top: 24px; }
+      .deliverable { grid-template-columns: 1fr 1fr; }
+      .label { grid-column: 1 / -1; min-height: 0; padding: 16px 0 12px; }
+      .sample { min-height: 126px; padding: 24px 12px; }
+      .sample.light { border-left: 0; }
+      .sample img { max-width: 210px; max-height: 86px; }
+      .sample.icon img { max-width: 86px; max-height: 86px; }
+      .sample.stacked { min-height: 210px; }
+      .sample.stacked img { max-height: 170px; }
+      footer { display: block; }
+      footer span { display: block; margin-top: 10px; }
+      footer span:last-child { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Lofte / identity system</p>
+        <h1>LOFTE</h1>
+      </div>
+      <p class="intro">A focused training tracker for Olympic weightlifters. The plate holds the work; the cut arrow keeps it moving up.</p>
+    </header>
+
+    <section aria-labelledby="primary-heading">
+      <div class="section-head">
+        <h2 id="primary-heading">Primary marks</h2>
+        <p class="section-note">Lofte red · #D84B32</p>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Icon</strong><code>lofte-icon.svg</code></div>
+        <div class="sample dark icon"><span class="swatch-label">on black</span><img src="lofte-icon.svg" alt="Lofte red icon"></div>
+        <div class="sample light icon"><span class="swatch-label">on off-white</span><img src="lofte-icon.svg" alt="Lofte red icon"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Wordmark</strong><code>lofte-wordmark.svg</code></div>
+        <div class="sample dark"><span class="swatch-label">on black</span><img src="lofte-wordmark.svg" alt="Lofte red wordmark"></div>
+        <div class="sample light"><span class="swatch-label">on off-white</span><img src="lofte-wordmark.svg" alt="Lofte red wordmark"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Horizontal lockup</strong><code>lofte-lockup-horizontal.svg</code></div>
+        <div class="sample dark"><span class="swatch-label">on black</span><img src="lofte-lockup-horizontal.svg" alt="Lofte red horizontal lockup"></div>
+        <div class="sample light"><span class="swatch-label">on off-white</span><img src="lofte-lockup-horizontal.svg" alt="Lofte red horizontal lockup"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Stacked lockup</strong><code>lofte-lockup-stacked.svg</code></div>
+        <div class="sample dark stacked"><span class="swatch-label">on black</span><img src="lofte-lockup-stacked.svg" alt="Lofte red stacked lockup"></div>
+        <div class="sample light stacked"><span class="swatch-label">on off-white</span><img src="lofte-lockup-stacked.svg" alt="Lofte red stacked lockup"></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="mono-heading">
+      <div class="section-head">
+        <h2 id="mono-heading">Monochrome marks</h2>
+        <p class="section-note">Ink · #111312 / Paper · #F4F0E9</p>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Icon / mono</strong><code>lofte-icon-mono.svg<br>lofte-icon-reverse.svg</code></div>
+        <div class="sample dark icon"><span class="swatch-label">reverse on black</span><img src="lofte-icon-reverse.svg" alt="Lofte reverse monochrome icon"></div>
+        <div class="sample light icon"><span class="swatch-label">ink on off-white</span><img src="lofte-icon-mono.svg" alt="Lofte monochrome icon"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Wordmark / mono</strong><code>lofte-wordmark-mono.svg<br>lofte-wordmark-reverse.svg</code></div>
+        <div class="sample dark"><span class="swatch-label">reverse on black</span><img src="lofte-wordmark-reverse.svg" alt="Lofte reverse monochrome wordmark"></div>
+        <div class="sample light"><span class="swatch-label">ink on off-white</span><img src="lofte-wordmark-mono.svg" alt="Lofte monochrome wordmark"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Horizontal / mono</strong><code>lofte-lockup-horizontal-mono.svg<br>lofte-lockup-horizontal-reverse.svg</code></div>
+        <div class="sample dark"><span class="swatch-label">reverse on black</span><img src="lofte-lockup-horizontal-reverse.svg" alt="Lofte reverse monochrome horizontal lockup"></div>
+        <div class="sample light"><span class="swatch-label">ink on off-white</span><img src="lofte-lockup-horizontal-mono.svg" alt="Lofte monochrome horizontal lockup"></div>
+      </div>
+      <div class="deliverable">
+        <div class="label"><strong>Stacked / mono</strong><code>lofte-lockup-stacked-mono.svg<br>lofte-lockup-stacked-reverse.svg</code></div>
+        <div class="sample dark stacked"><span class="swatch-label">reverse on black</span><img src="lofte-lockup-stacked-reverse.svg" alt="Lofte reverse monochrome stacked lockup"></div>
+        <div class="sample light stacked"><span class="swatch-label">ink on off-white</span><img src="lofte-lockup-stacked-mono.svg" alt="Lofte monochrome stacked lockup"></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>Flat vector artwork · no gradients · no shadows</span>
+      <span>Wordmark uses a geometric system-safe sans fallback.</span>
+    </footer>
+  </main>
+</body>
+</html>

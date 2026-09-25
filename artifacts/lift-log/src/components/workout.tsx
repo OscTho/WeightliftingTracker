@@ -14,6 +14,7 @@
 import { ArrowRight, Check, Pencil, TrendingUp, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { exerciseLabels } from '@/lib/utils';
+import { accessoryEquipmentLabel } from '@/lib/movements';
 import type { ExerciseName } from '@workspace/api-client-react';
 import { Button } from '@/components/button';
 
@@ -38,17 +39,19 @@ export type WorkoutSetStatus = 'pending' | 'current' | 'completed' | 'missed' | 
  */
 export interface WorkoutCurrentSetProps {
   exercise: ExerciseName;
+  exerciseLabel?: string;
   setNumber: number;
   totalSets: number;
   weight: number;
   reps: number;
-  percentage: number;
+  percentage?: number;
+  equipment?: string;
   /** Called when the athlete taps the edit affordance on the weight. */
   onEditWeight?: () => void;
 }
 
 export function WorkoutCurrentSet({
-  exercise, setNumber, totalSets, weight, reps, percentage, onEditWeight
+  exercise, exerciseLabel, setNumber, totalSets, weight, reps, percentage, equipment, onEditWeight
 }: WorkoutCurrentSetProps) {
   return (
     <div className="relative overflow-hidden rounded-xl bg-elevated p-6 text-foreground">
@@ -66,7 +69,7 @@ export function WorkoutCurrentSet({
           Rep {setNumber} of {totalSets}
         </p>
         <h2 className="mt-3 font-display text-4xl font-semibold uppercase leading-none tracking-tight">
-          {exerciseLabels[exercise]}
+          {exerciseLabel ?? exerciseLabels[exercise] ?? exercise.replace(/_/g, ' ')}
         </h2>
 
         {/* Weight — the dominant element */}
@@ -78,6 +81,7 @@ export function WorkoutCurrentSet({
                 type="button"
                 onClick={onEditWeight}
                 className="tap flex items-center gap-1.5 rounded border border-border px-2 py-1 font-data text-[10px] uppercase tracking-wider text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                data-testid="button-edit-workout-load"
               >
                 <Pencil size={10} /> edit
               </button>
@@ -89,15 +93,19 @@ export function WorkoutCurrentSet({
           </p>
         </div>
 
-        {/* Reps + percentage */}
+        {/* Reps + target */}
         <div className="mt-5 flex gap-8">
           <div>
             <p className="font-data text-[9px] uppercase tracking-[.2em] text-foreground/50">Reps</p>
             <p className="font-display text-4xl font-semibold">{reps}</p>
           </div>
           <div>
-            <p className="font-data text-[9px] uppercase tracking-[.2em] text-foreground/50">Target</p>
-            <p className="font-display text-4xl font-semibold">{percentage}%</p>
+            <p className="font-data text-[9px] uppercase tracking-[.2em] text-foreground/50">
+              {percentage != null ? 'Target' : 'Equipment'}
+            </p>
+            <p className="font-display text-2xl font-semibold">
+              {percentage != null ? `${percentage}%` : accessoryEquipmentLabel(equipment)}
+            </p>
           </div>
         </div>
       </div>

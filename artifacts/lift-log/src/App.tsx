@@ -10,9 +10,10 @@ import {
   WorkoutPage,
 } from '@/pages';
 import { HistoryPage, ProfilePage, ProgrammePage } from '@/pages/mobile-core-pages';
+import { LoginPage, SignupPage } from '@/pages/auth-pages';
 import { DesignSystemPage } from '@/pages/design-system';
 import { Shell } from '@/components/shell';
-import { useStartWorkout } from '@workspace/api-client-react';
+import { getGetCurrentSessionQueryKey, useGetCurrentSession, useStartWorkout } from '@workspace/api-client-react';
 import {
   Route,
   Switch,
@@ -81,6 +82,73 @@ function Router() {
   );
 }
 
+function AuthBoundary() {
+  const [location, setLocation] = useLocation();
+  const session = useGetCurrentSession({ query: { retry: false, queryKey: getGetCurrentSessionQueryKey() } });
+  const isAuthPage = location === '/login' || location === '/signup';
+  useEffect(() => {
+    const handleExpired = () => {
+      queryClient.clear();
+      setLocation(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+    };
+    window.addEventListener('lofte:auth-expired', handleExpired);
+    return () => window.removeEventListener('lofte:auth-expired', handleExpired);
+  }, [setLocation]);
+
+  if (isAuthPage) {
+    if (session.isSuccess) {
+      return <RedirectToHome setLocation={setLocation} />;
+    }
+    return location === '/signup' ? <SignupPage /> : <LoginPage />;
+  }
+
+  if (session.isLoading) {
+    return (
+      <div className="grain flex min-h-[100dvh] items-center justify-center bg-background">
+        <p className="font-data text-xs uppercase tracking-widest text-muted-foreground">Restoring your session…</p>
+      </div>
+    );
+  }
+
+  if (session.isError && session.error?.status !== 401) {
+    return (
+      <div className="grain flex min-h-[100dvh] items-center justify-center bg-background px-5">
+        <div className="w-full max-w-[402px] rounded-2xl border border-destructive/30 bg-card p-6" role="alert">
+          <p className="type-section-heading">We couldn’t restore your session</p>
+          <p className="mt-2 type-body-sm text-muted-foreground">Check your connection, then try again.</p>
+          <button
+            type="button"
+            className="mt-5 min-h-12 w-full rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground"
+            onClick={() => session.refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (session.isError || !session.data) {
+    return <RedirectToLogin location={location} setLocation={setLocation} />;
+  }
+
+  return <Router />;
+}
+
+function RedirectToHome({ setLocation }: { setLocation: (path: string) => void }) {
+  useEffect(() => {
+    setLocation('/');
+  }, [setLocation]);
+  return null;
+}
+
+function RedirectToLogin({ location, setLocation }: { location: string; setLocation: (path: string) => void }) {
+  useEffect(() => {
+    setLocation(`/login?next=${encodeURIComponent(location)}`);
+  }, [location, setLocation]);
+  return null;
+}
+
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
@@ -91,7 +159,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
+           <AuthBoundary />
         </WouterRouter>
         <Toaster />
       </TooltipProvider>

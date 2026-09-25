@@ -74,6 +74,23 @@ const SWATCHES = [
   { name: 'Border',            cls: 'bg-border',                           hex: '#343941', note: 'Dividers' },
 ];
 
+const BRAND_ASSET_BASE = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/brand`;
+
+const BRAND_MARKS = [
+  { label: 'Icon mark', file: 'lofte-icon.svg', surface: 'bg-background', size: 'icon' },
+  { label: 'Wordmark', file: 'lofte-wordmark.svg', surface: 'bg-background', size: 'wordmark' },
+  { label: 'Horizontal lockup', file: 'lofte-lockup-horizontal.svg', surface: 'bg-background', size: 'wide' },
+  { label: 'Stacked lockup', file: 'lofte-lockup-stacked.svg', surface: 'bg-background', size: 'stacked' },
+  { label: 'Icon · ink', file: 'lofte-icon-mono.svg', surface: 'bg-[#F4F0E9]', size: 'icon' },
+  { label: 'Icon · reverse', file: 'lofte-icon-reverse.svg', surface: 'bg-background', size: 'icon' },
+  { label: 'Wordmark · ink', file: 'lofte-wordmark-mono.svg', surface: 'bg-[#F4F0E9]', size: 'wordmark' },
+  { label: 'Wordmark · reverse', file: 'lofte-wordmark-reverse.svg', surface: 'bg-background', size: 'wordmark' },
+  { label: 'Horizontal · ink', file: 'lofte-lockup-horizontal-mono.svg', surface: 'bg-[#F4F0E9]', size: 'wide' },
+  { label: 'Horizontal · reverse', file: 'lofte-lockup-horizontal-reverse.svg', surface: 'bg-background', size: 'wide' },
+  { label: 'Stacked · ink', file: 'lofte-lockup-stacked-mono.svg', surface: 'bg-[#F4F0E9]', size: 'stacked' },
+  { label: 'Stacked · reverse', file: 'lofte-lockup-stacked-reverse.svg', surface: 'bg-background', size: 'stacked' },
+] as const;
+
 const SPACING_STEPS = [
   { token: '--space-1',  label: 'space-1',  px: '4px',  tw: 'p-1'  },
   { token: '--space-2',  label: 'space-2',  px: '8px',  tw: 'p-2'  },
@@ -84,6 +101,42 @@ const SPACING_STEPS = [
   { token: '--space-12', label: 'space-12', px: '48px', tw: 'p-12' },
   { token: '--space-16', label: 'space-16', px: '64px', tw: 'p-16' },
 ];
+
+type BrandTileProps = {
+  label: string;
+  file: string;
+  surface: 'bg-background' | 'bg-[#F4F0E9]';
+  size: 'icon' | 'wordmark' | 'wide' | 'stacked';
+};
+
+function BrandTile({ label, file, surface, size }: BrandTileProps) {
+  const tileSize =
+    size === 'wide'
+      ? 'col-span-2 min-h-28'
+      : size === 'stacked'
+        ? 'min-h-52'
+        : 'min-h-28';
+  const imageSize =
+    size === 'icon'
+      ? 'h-20 w-20'
+      : size === 'stacked'
+        ? 'h-44 w-36'
+        : 'h-16 w-[88%]';
+
+  return (
+    <div className={`relative flex items-center justify-center overflow-hidden rounded-xl border border-border p-4 ${surface} ${tileSize}`}>
+      <span className={`absolute left-3 top-3 font-data text-[9px] uppercase tracking-widest ${surface === 'bg-background' ? 'text-muted-foreground' : 'text-background/50'}`}>
+        {label}
+      </span>
+      <img
+        src={`${BRAND_ASSET_BASE}/${file}`}
+        alt={`Lofte ${label}`}
+        className={`object-contain ${imageSize}`}
+        loading="lazy"
+      />
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────
 
@@ -125,8 +178,22 @@ export function DesignSystemPage() {
         </div>
       </DSSection>
 
-      {/* ─── 2. Typography ─────────────────────────────── */}
-      <DSSection title="02 — Typography">
+      {/* ─── 2. Brand marks ─────────────────────────────── */}
+      <DSSection title="02 — Brand Marks">
+        <div className="space-y-5">
+          <p className="type-body-sm text-muted-foreground">
+            The production wordmark uses uppercase LOFTE in the same Geist display face as the product UI. Primary marks use Lofte red; ink and reverse variants are ready for stamping and dark surfaces.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {BRAND_MARKS.map(mark => (
+              <BrandTile key={mark.file} {...mark} />
+            ))}
+          </div>
+        </div>
+      </DSSection>
+
+      {/* ─── 3. Typography ─────────────────────────────── */}
+      <DSSection title="03 — Typography">
         <div className="space-y-6 rounded-xl border border-border bg-card p-5">
 
           <div>
@@ -187,8 +254,8 @@ export function DesignSystemPage() {
         </div>
       </DSSection>
 
-      {/* ─── 3. Spacing ────────────────────────────────── */}
-      <DSSection title="03 — Spacing">
+      {/* ─── 4. Spacing ────────────────────────────────── */}
+      <DSSection title="04 — Spacing">
         <div className="rounded-xl border border-border bg-card p-5 space-y-3">
           {SPACING_STEPS.map(s => (
             <div key={s.label} className="flex items-center gap-4">
@@ -204,8 +271,8 @@ export function DesignSystemPage() {
         </div>
       </DSSection>
 
-      {/* ─── 4. Buttons ────────────────────────────────── */}
-      <DSSection title="04 — Buttons">
+      {/* ─── 5. Buttons ────────────────────────────────── */}
+      <DSSection title="05 — Buttons">
         <DSRow label="Variants">
           <Button variant="primary">Primary</Button>
           <Button variant="secondary">Secondary</Button>
@@ -250,8 +317,8 @@ export function DesignSystemPage() {
         </DSRow>
       </DSSection>
 
-      {/* ─── 5. Form components ────────────────────────── */}
-      <DSSection title="05 — Form Components">
+      {/* ─── 6. Form components ────────────────────────── */}
+      <DSSection title="06 — Form Components">
         <div className="space-y-4">
           <Input label="Text input" placeholder="Your name" />
           <Input label="Number input" type="number" placeholder="0" />
@@ -283,7 +350,11 @@ export function DesignSystemPage() {
             <RadioGroup
               label="Rounding increment"
               value={radio}
-              onChange={setRadio}
+              onChange={(value) => {
+                if (typeof value === 'string') {
+                  setRadio(value);
+                }
+              }}
               options={[
                 { value: 'a', label: '1 kg' },
                 { value: 'b', label: '2 kg' },
@@ -294,8 +365,8 @@ export function DesignSystemPage() {
         </div>
       </DSSection>
 
-      {/* ─── 6. Cards ──────────────────────────────────── */}
-      <DSSection title="06 — Cards">
+      {/* ─── 7. Cards ──────────────────────────────────── */}
+      <DSSection title="07 — Cards">
         <DSRow label="Default">
           <Card className="w-full">
             <CardEyebrow>Weekly cycle</CardEyebrow>
@@ -337,8 +408,8 @@ export function DesignSystemPage() {
         </DSRow>
       </DSSection>
 
-      {/* ─── 7. Workout components ─────────────────────── */}
-      <DSSection title="07 — Workout Components">
+      {/* ─── 8. Workout components ─────────────────────── */}
+      <DSSection title="08 — Workout Components">
 
         <DSRow label="Current set (dominant weight)">
           <div className="w-full">
@@ -371,8 +442,8 @@ export function DesignSystemPage() {
 
       </DSSection>
 
-      {/* ─── 8. Set status ─────────────────────────────── */}
-      <DSSection title="08 — Set Status">
+      {/* ─── 9. Set status ─────────────────────────────── */}
+      <DSSection title="09 — Set Status">
 
         <DSRow label="Status bar (completed / current / missed / pending)">
           <div className="w-full space-y-3">
@@ -390,8 +461,8 @@ export function DesignSystemPage() {
 
       </DSSection>
 
-      {/* ─── 9. PB celebration ─────────────────────────── */}
-      <DSSection title="09 — PB Celebration">
+      {/* ─── 10. PB celebration ────────────────────────── */}
+      <DSSection title="10 — PB Celebration">
         <DSRow label="Trigger (renders full-screen overlay)">
           <Button variant="secondary" onClick={() => setPbOpen(true)}>
             <Trophy size={16} /> Preview PB celebration
@@ -407,8 +478,8 @@ export function DesignSystemPage() {
         )}
       </DSSection>
 
-      {/* ─── 10. Bottom sheet ──────────────────────────── */}
-      <DSSection title="10 — Bottom Sheet">
+      {/* ─── 11. Bottom sheet ──────────────────────────── */}
+      <DSSection title="11 — Bottom Sheet">
         <Button variant="tertiary" onClick={() => setSheetOpen(true)}>
           Open bottom sheet
         </Button>
@@ -437,8 +508,8 @@ export function DesignSystemPage() {
         </BottomSheet>
       </DSSection>
 
-      {/* ─── 11. Feedback states ───────────────────────── */}
-      <DSSection title="11 — Feedback States">
+      {/* ─── 12. Feedback states ───────────────────────── */}
+      <DSSection title="12 — Feedback States">
         <div className="space-y-4">
           <div>
             <DSLabel>Loading</DSLabel>
@@ -461,8 +532,8 @@ export function DesignSystemPage() {
         </div>
       </DSSection>
 
-      {/* ─── 12. Borders & shadows ─────────────────────── */}
-      <DSSection title="12 — Elevation & Shadows">
+      {/* ─── 13. Borders & shadows ─────────────────────── */}
+      <DSSection title="13 — Elevation & Shadows">
         <div className="space-y-3">
           {[
             { label: '--shadow-sm', cls: '[box-shadow:var(--shadow-sm)]' },

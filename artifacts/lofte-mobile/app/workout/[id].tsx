@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   getGetDashboardQueryKey,
   getGetHistoryQueryKey,
+  useGetMovements,
   getGetWorkoutQueryKey,
   useCompleteSet,
   useFinishWorkout,
@@ -60,6 +61,7 @@ export default function WorkoutScreen() {
   const { data: workout, isLoading, isError, refetch } = useGetWorkout(workoutId, {
     query: { queryKey: getGetWorkoutQueryKey(workoutId), enabled: Number.isFinite(workoutId) },
   });
+  const { data: movements } = useGetMovements();
 
   const completeSet = useCompleteSet();
   const missSet = useMissSet();
@@ -70,6 +72,14 @@ export default function WorkoutScreen() {
   const [customWeight, setCustomWeight] = useState<number | null>(null);
   const [draftWeight, setDraftWeight] = useState('');
   const pendingSetId = workout?.sets.find((set) => set.status === 'pending')?.id;
+  const movementName = (id?: string) =>
+    movements?.find((movement) => movement.id === id)?.name ??
+    EXERCISE_LABELS[id ?? ''] ??
+    id?.replace(/_/g, ' ') ??
+    'Snatch';
+  const movementShortName = (id?: string) =>
+    EXERCISE_SHORT[id ?? ''] ??
+    movementName(id).split(/\s+/).map((part) => part[0]).join('').slice(0, 4).toUpperCase();
 
   useEffect(() => {
     setCustomWeight(null);
@@ -229,7 +239,7 @@ export default function WorkoutScreen() {
 
   // ── exercise-level progress dots ──
   const currentExerciseSets = currentSet
-    ? workout.sets.filter((s) => s.exercise === currentSet.exercise)
+    ? workout.sets.filter((s) => (s.movementId ?? s.exercise) === (currentSet.movementId ?? currentSet.exercise))
     : [];
 
   // ── render active workout ──
@@ -279,7 +289,7 @@ export default function WorkoutScreen() {
           <View style={styles.currentSetContainer}>
             <Text style={[styles.movementLabel, { color: colors.primary }]}>MOVEMENT {movementNumber} OF {exerciseOrder.length}</Text>
             <Text style={[styles.exerciseTitle, { color: colors.foreground }]}>
-              {EXERCISE_LABELS[currentSet.exercise] ?? currentSet.exercise}
+              {movementName(currentSet.movementId ?? currentSet.exercise)}
             </Text>
 
             {/* Progress dots for this exercise */}
@@ -483,7 +493,7 @@ export default function WorkoutScreen() {
               >
                 <Feather name={icon} size={14} color={iconColor} />
                 <Text style={[styles.setRowEx, { color: isCurrent ? colors.foreground : colors.mutedForeground }]}>
-                  {EXERCISE_SHORT[s.exercise] ?? s.exercise}
+                  {movementShortName(s.movementId ?? s.exercise)}
                 </Text>
                 <Text style={[styles.setRowNum, { color: colors.mutedForeground }]}>
                   {s.setNumber}/{s.totalSets}

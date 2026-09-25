@@ -1,8 +1,10 @@
 import { Router, type IRouter } from "express";
-import { desc, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, asc, desc, eq } from "drizzle-orm";
 import {
   db,
   athleteProfilesTable,
+  movementsTable,
   programmesTable,
   workoutsTable,
   type ProgrammeExercise,
@@ -24,12 +26,18 @@ import {
   UpdateProgrammeBody,
   UpdateProgrammeResponse,
   DeleteProgrammeParams,
+  GetMovementsResponse,
+  CreateMovementBody,
+  CreateMovementResponse,
   GetDashboardResponse,
   GetHistoryResponse,
   StartWorkoutBody,
   StartWorkoutResponse,
   GetWorkoutParams,
   GetWorkoutResponse,
+  UpdateWorkoutSetParams,
+  UpdateWorkoutSetBody,
+  UpdateWorkoutSetResponse,
   CompleteSetParams,
   CompleteSetBody,
   CompleteSetResponse,
@@ -39,8 +47,10 @@ import {
   FinishWorkoutParams,
   FinishWorkoutResponse,
 } from "@workspace/api-zod";
+import { loadAuth, requireAuth } from "../auth";
 
 const router: IRouter = Router();
+router.use(loadAuth, requireAuth);
 
 const asNumber = (value: string | number | null | undefined) =>
   value == null ? 0 : Number(value);
@@ -50,6 +60,94 @@ const parseIdParam = (value: string | string[] | undefined) =>
 
 const normalizeSessionNumbers = <T extends { sessionNumber: number }>(sessions: T[]) =>
   sessions.map((session, index) => ({ ...session, sessionNumber: index + 1 }));
+
+const STANDARD_MOVEMENTS = [
+  { id: "snatch", name: "Snatch", category: "Competition Lifts" },
+  { id: "clean_and_jerk", name: "Clean & Jerk", category: "Competition Lifts" },
+  { id: "clean", name: "Clean", category: "Competition Lifts" },
+  { id: "jerk", name: "Jerk", category: "Competition Lifts" },
+  { id: "power_snatch", name: "Power Snatch", category: "Snatch Variations" },
+  { id: "hang_snatch", name: "Hang Snatch", category: "Snatch Variations" },
+  { id: "high_hang_snatch", name: "High Hang Snatch", category: "Snatch Variations" },
+  { id: "block_snatch", name: "Block Snatch", category: "Snatch Variations" },
+  { id: "muscle_snatch", name: "Muscle Snatch", category: "Snatch Variations" },
+  { id: "snatch_from_blocks", name: "Snatch from Blocks", category: "Snatch Variations" },
+  { id: "snatch_pull", name: "Snatch Pull", category: "Snatch Variations" },
+  { id: "snatch_high_pull", name: "Snatch High Pull", category: "Snatch Variations" },
+  { id: "snatch_balance", name: "Snatch Balance", category: "Snatch Variations" },
+  { id: "overhead_squat", name: "Overhead Squat", category: "Snatch Variations" },
+  { id: "power_clean", name: "Power Clean", category: "Clean Variations" },
+  { id: "hang_clean", name: "Hang Clean", category: "Clean Variations" },
+  { id: "high_hang_clean", name: "High Hang Clean", category: "Clean Variations" },
+  { id: "block_clean", name: "Block Clean", category: "Clean Variations" },
+  { id: "muscle_clean", name: "Muscle Clean", category: "Clean Variations" },
+  { id: "clean_from_blocks", name: "Clean from Blocks", category: "Clean Variations" },
+  { id: "clean_pull", name: "Clean Pull", category: "Clean Variations" },
+  { id: "clean_high_pull", name: "Clean High Pull", category: "Clean Variations" },
+  { id: "clean_deadlift", name: "Clean Deadlift", category: "Clean Variations" },
+  { id: "power_jerk", name: "Power Jerk", category: "Jerk Variations" },
+  { id: "push_jerk", name: "Push Jerk", category: "Jerk Variations" },
+  { id: "split_jerk", name: "Split Jerk", category: "Jerk Variations" },
+  { id: "hang_jerk", name: "Hang Jerk", category: "Jerk Variations" },
+  { id: "jerk_from_blocks", name: "Jerk from Blocks", category: "Jerk Variations" },
+  { id: "jerk_balance", name: "Jerk Balance", category: "Jerk Variations" },
+  { id: "tall_jerk", name: "Tall Jerk", category: "Jerk Variations" },
+  { id: "jerk_dip", name: "Jerk Dip", category: "Jerk Variations" },
+  { id: "jerk_drive", name: "Jerk Drive", category: "Jerk Variations" },
+  { id: "back_squat", name: "Back Squat", category: "Squats" },
+  { id: "front_squat", name: "Front Squat", category: "Squats" },
+  { id: "pause_back_squat", name: "Pause Back Squat", category: "Squats" },
+  { id: "pause_front_squat", name: "Pause Front Squat", category: "Squats" },
+  { id: "tempo_back_squat", name: "Tempo Back Squat", category: "Squats" },
+  { id: "tempo_front_squat", name: "Tempo Front Squat", category: "Squats" },
+  { id: "romanian_deadlift", name: "Romanian Deadlift", category: "Accessories" },
+  { id: "deadlift", name: "Deadlift", category: "Accessories" },
+  { id: "good_morning", name: "Good Morning", category: "Accessories" },
+  { id: "bulgarian_split_squat", name: "Bulgarian Split Squat", category: "Accessories" },
+  { id: "walking_lunge", name: "Walking Lunge", category: "Accessories" },
+  { id: "reverse_lunge", name: "Reverse Lunge", category: "Accessories" },
+  { id: "step_up", name: "Step-Up", category: "Accessories" },
+  { id: "hip_thrust", name: "Hip Thrust", category: "Accessories" },
+  { id: "nordic_curl", name: "Nordic Curl", category: "Accessories" },
+  { id: "back_extension", name: "Back Extension", category: "Accessories" },
+] as const;
+
+function movementIdOf(exercise: ProgrammeExercise) {
+  return exercise.movementId || exercise.exercise || "snatch";
+}
+
+function normalizeProgrammeSessions(sessions: Array<{
+  sessionNumber: number;
+  name: string;
+  exercises: Array<{
+    movementId?: string;
+    exercise?: string;
+    sets: number;
+    reps: number;
+    percentage?: number;
+    weight?: number;
+    equipment?: "kettlebell" | "bands" | "barbell" | "dumbbell";
+  }>;
+}>) {
+  return normalizeSessionNumbers(sessions).map((session) => ({
+    ...session,
+    exercises: session.exercises.map(({ exercise, movementId, ...rest }) => ({
+      ...rest,
+      movementId: movementId ?? exercise ?? "snatch",
+    })),
+  }));
+}
+
+function movementResponse(row: typeof movementsTable.$inferSelect) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    description: row.description,
+    isCustom: row.isCustom,
+    userId: row.isCustom ? String(row.ownerUserId ?? row.ownerProfileId ?? "default-athlete") : null,
+  };
+}
 
 function profileResponse(row: typeof athleteProfilesTable.$inferSelect): ProfileData {
   return {
@@ -65,12 +163,14 @@ function profileResponse(row: typeof athleteProfilesTable.$inferSelect): Profile
 }
 
 function programmeResponse(row: typeof programmesTable.$inferSelect) {
-  const sessions = (row.sessions as ProgrammeSession[]).map((session, sessionIndex) => ({
+  const sessions = (row.sessions as unknown as ProgrammeSession[]).map((session, sessionIndex) => ({
     id: row.id * 100 + sessionIndex + 1,
     sessionNumber: session.sessionNumber,
     name: session.name,
     exercises: session.exercises.map((exercise, exerciseIndex) => ({
       ...exercise,
+      movementId: movementIdOf(exercise),
+      exercise: movementIdOf(exercise),
       id: row.id * 10000 + (sessionIndex + 1) * 100 + exerciseIndex + 1,
       order: exerciseIndex + 1,
     })),
@@ -87,7 +187,7 @@ function programmeResponse(row: typeof programmesTable.$inferSelect) {
 }
 
 function programmeSummary(row: typeof programmesTable.$inferSelect) {
-  const sessions = row.sessions as ProgrammeSession[];
+  const sessions = row.sessions as unknown as ProgrammeSession[];
   return {
     id: row.id,
     name: row.name,
@@ -98,15 +198,48 @@ function programmeSummary(row: typeof programmesTable.$inferSelect) {
   };
 }
 
-function exercisePb(profile: ProfileData, exercise: ProgrammeExercise["exercise"]) {
-  const pbs = {
-    snatch: profile.snatchPb,
-    clean_and_jerk: profile.cleanJerkPb,
-    back_squat: profile.backSquatPb,
-    front_squat: profile.frontSquatPb,
-  };
-  return pbs[exercise];
+function exercisePb(
+  profile: ProfileData,
+  movementId: string,
+  movement?: { name: string; category: string },
+) {
+  const searchableName = `${movementId} ${movement?.name ?? ""}`.toLowerCase();
+  const category = movement?.category;
+
+  if (movementId === "snatch" || category === "Snatch Variations") {
+    return profile.snatchPb;
+  }
+  if (
+    movementId === "clean_and_jerk" ||
+    movementId === "clean" ||
+    movementId === "jerk" ||
+    category === "Clean Variations" ||
+    category === "Jerk Variations"
+  ) {
+    return profile.cleanJerkPb;
+  }
+  if (category === "Squats" || movementId === "back_squat" || movementId === "front_squat") {
+    return searchableName.includes("front") ? profile.frontSquatPb : profile.backSquatPb;
+  }
+
+  return undefined;
 }
+
+function calculatedTargetWeight(
+  profile: ProfileData,
+  movementId: string,
+  percentage: number,
+  movement?: { name: string; category: string },
+) {
+  const pb = exercisePb(profile, movementId, movement);
+  if (!pb) return 0;
+  return Math.round(
+    (pb * percentage / 100) / profile.roundingIncrement,
+  ) * profile.roundingIncrement;
+}
+
+const sameMovement = (left: WorkoutSet, right: WorkoutSet) =>
+  (left.movementId ?? left.exercise) === (right.movementId ?? right.exercise);
 
 function workoutResponse(row: typeof workoutsTable.$inferSelect): WorkoutData {
   return {
@@ -141,7 +274,7 @@ function historyResponse(
     };
     for (const s of sets) {
       if (s.status === "completed" && s.weight > 0) {
-        const pb = pbs[s.exercise];
+        const pb = pbs[s.movementId ?? s.exercise];
         if (pb != null && s.weight >= pb) {
           // Only add unique exercise+weight combos
           const alreadyAdded = pbSets.some(
@@ -169,23 +302,23 @@ function historyResponse(
   };
 }
 
-async function getProfileRow() {
-  const [row] = await db.select().from(athleteProfilesTable).limit(1);
+async function getProfileRow(userId: number) {
+  const [row] = await db.select().from(athleteProfilesTable).where(eq(athleteProfilesTable.userId, userId)).limit(1);
   return row;
 }
 
-async function getProgrammeRow(id: number) {
-  const [row] = await db.select().from(programmesTable).where(eq(programmesTable.id, id));
+async function getProgrammeRow(id: number, userId: number) {
+  const [row] = await db.select().from(programmesTable).where(and(eq(programmesTable.id, id), eq(programmesTable.userId, userId)));
   return row;
 }
 
-async function getWorkoutRow(id: number) {
-  const [row] = await db.select().from(workoutsTable).where(eq(workoutsTable.id, id));
+async function getWorkoutRow(id: number, userId: number) {
+  const [row] = await db.select().from(workoutsTable).where(and(eq(workoutsTable.id, id), eq(workoutsTable.userId, userId)));
   return row;
 }
 
-router.get("/profile", async (_req, res): Promise<void> => {
-  const row = await getProfileRow();
+router.get("/profile", async (req, res): Promise<void> => {
+  const row = await getProfileRow(req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Profile not found" });
     return;
@@ -199,7 +332,7 @@ router.put("/profile", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const existing = await getProfileRow();
+  const existing = await getProfileRow(req.auth!.id);
   const values = {
     name: parsed.data.name,
     snatchPb: String(parsed.data.snatchPb),
@@ -209,14 +342,47 @@ router.put("/profile", async (req, res): Promise<void> => {
     roundingIncrement: String(parsed.data.roundingIncrement),
   };
   const [row] = existing
-    ? await db.update(athleteProfilesTable).set(values).where(eq(athleteProfilesTable.id, existing.id)).returning()
-    : await db.insert(athleteProfilesTable).values(values).returning();
+    ? await db.update(athleteProfilesTable).set(values).where(and(eq(athleteProfilesTable.id, existing.id), eq(athleteProfilesTable.userId, req.auth!.id))).returning()
+    : await db.insert(athleteProfilesTable).values({ ...values, userId: req.auth!.id }).returning();
   res.json(SaveProfileResponse.parse(profileResponse(row)));
 });
 
-router.get("/programmes", async (_req, res): Promise<void> => {
-  const rows = await db.select().from(programmesTable).orderBy(desc(programmesTable.updatedAt));
+router.get("/programmes", async (req, res): Promise<void> => {
+  const rows = await db.select().from(programmesTable).where(eq(programmesTable.userId, req.auth!.id)).orderBy(desc(programmesTable.updatedAt));
   res.json(GetProgrammesResponse.parse(rows.map(programmeSummary)));
+});
+
+router.get("/movements", async (req, res): Promise<void> => {
+  const profile = await getProfileRow(req.auth!.id);
+  const customRows = await db.select().from(movementsTable)
+    .where(and(eq(movementsTable.ownerUserId, req.auth!.id), eq(movementsTable.isCustom, true)))
+    .orderBy(asc(movementsTable.name));
+  const standard = STANDARD_MOVEMENTS.map((movement) => ({
+    ...movement,
+    description: null,
+    isCustom: false,
+    userId: null,
+  }));
+  res.json(GetMovementsResponse.parse([...standard, ...customRows.map(movementResponse)]));
+});
+
+router.post("/movements", async (req, res): Promise<void> => {
+  const parsed = CreateMovementBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const profile = await getProfileRow(req.auth!.id);
+  const [row] = await db.insert(movementsTable).values({
+    id: `custom-${randomUUID()}`,
+    name: parsed.data.name.trim(),
+    category: parsed.data.category,
+    description: parsed.data.description?.trim() || null,
+    isCustom: true,
+    ownerProfileId: profile?.id ?? null,
+    ownerUserId: req.auth!.id,
+  }).returning();
+  res.status(201).json(CreateMovementResponse.parse(movementResponse(row)));
 });
 
 router.post("/programmes", async (req, res): Promise<void> => {
@@ -226,10 +392,11 @@ router.post("/programmes", async (req, res): Promise<void> => {
     return;
   }
   const [row] = await db.insert(programmesTable).values({
+    userId: req.auth!.id,
     name: parsed.data.name,
     sessionsPerWeek: parsed.data.sessionsPerWeek,
     lengthWeeks: parsed.data.lengthWeeks,
-    sessions: normalizeSessionNumbers(parsed.data.sessions),
+    sessions: normalizeProgrammeSessions(parsed.data.sessions),
   }).returning();
   res.status(201).json(CreateProgrammeResponse.parse(programmeResponse(row)));
 });
@@ -240,7 +407,7 @@ router.get("/programmes/:programmeId", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const row = await getProgrammeRow(parsed.data.programmeId);
+  const row = await getProgrammeRow(parsed.data.programmeId, req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Programme not found" });
     return;
@@ -259,9 +426,9 @@ router.put("/programmes/:programmeId", async (req, res): Promise<void> => {
     name: body.data.name,
     sessionsPerWeek: body.data.sessionsPerWeek,
     lengthWeeks: body.data.lengthWeeks,
-    sessions: normalizeSessionNumbers(body.data.sessions),
+    sessions: normalizeProgrammeSessions(body.data.sessions),
     updatedAt: new Date(),
-  }).where(eq(programmesTable.id, params.data.programmeId)).returning();
+  }).where(and(eq(programmesTable.id, params.data.programmeId), eq(programmesTable.userId, req.auth!.id))).returning();
   if (!row) {
     res.status(404).json({ error: "Programme not found" });
     return;
@@ -275,7 +442,7 @@ router.delete("/programmes/:programmeId", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const [row] = await db.delete(programmesTable).where(eq(programmesTable.id, params.data.programmeId)).returning();
+  const [row] = await db.delete(programmesTable).where(and(eq(programmesTable.id, params.data.programmeId), eq(programmesTable.userId, req.auth!.id))).returning();
   if (!row) {
     res.status(404).json({ error: "Programme not found" });
     return;
@@ -283,29 +450,46 @@ router.delete("/programmes/:programmeId", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
-router.get("/dashboard", async (_req, res): Promise<void> => {
+router.get("/dashboard", async (req, res): Promise<void> => {
   const [profile, programme, workouts] = await Promise.all([
-    getProfileRow(),
-    db.select().from(programmesTable).orderBy(desc(programmesTable.updatedAt)).limit(1).then((rows) => rows[0]),
-    db.select().from(workoutsTable).orderBy(desc(workoutsTable.startedAt)).limit(3),
+    getProfileRow(req.auth!.id),
+    db.select().from(programmesTable).where(eq(programmesTable.userId, req.auth!.id)).orderBy(desc(programmesTable.updatedAt)).limit(1).then((rows) => rows[0]),
+    db.select().from(workoutsTable).where(eq(workoutsTable.userId, req.auth!.id)).orderBy(desc(workoutsTable.startedAt)).limit(3),
   ]);
   const detailedProgramme = programme ? programmeResponse(programme) : null;
+  const latestCompletedWorkout = programme
+    ? await db.select()
+        .from(workoutsTable)
+        .where(and(
+          eq(workoutsTable.programmeId, programme.id),
+          eq(workoutsTable.status, "completed"),
+        ))
+        .orderBy(desc(workoutsTable.completedAt), desc(workoutsTable.startedAt))
+        .limit(1)
+        .then((rows) => rows[0])
+    : undefined;
+  const completedSessionIndex = detailedProgramme?.sessions.findIndex(
+    (session) => session.sessionNumber === latestCompletedWorkout?.sessionNumber,
+  ) ?? -1;
+  const nextSession = detailedProgramme?.sessions.length
+    ? detailedProgramme.sessions[(completedSessionIndex + 1) % detailedProgramme.sessions.length]
+    : null;
   const profileData = profile ? profileResponse(profile) : null;
   const recentWorkouts = workouts.map((w) => historyResponse(w, profileData));
   const weeklyCompletedSets = workouts.reduce((total, workout) => total + workout.completedSets, 0);
   res.json(GetDashboardResponse.parse({
     profile: profile ? profileResponse(profile) : null,
     programme: programme ? programmeSummary(programme) : null,
-    nextSession: detailedProgramme?.sessions[0] ?? null,
+    nextSession,
     recentWorkouts,
     weeklyCompletedSets,
   }));
 });
 
-router.get("/history", async (_req, res): Promise<void> => {
+router.get("/history", async (req, res): Promise<void> => {
   const [rows, profileRow] = await Promise.all([
-    db.select().from(workoutsTable).orderBy(desc(workoutsTable.startedAt)),
-    getProfileRow(),
+    db.select().from(workoutsTable).where(eq(workoutsTable.userId, req.auth!.id)).orderBy(desc(workoutsTable.startedAt)),
+    getProfileRow(req.auth!.id),
   ]);
   const profileData = profileRow ? profileResponse(profileRow) : null;
   res.json(GetHistoryResponse.parse(rows.map((r) => historyResponse(r, profileData))));
@@ -317,9 +501,10 @@ router.post("/workouts", async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.message });
     return;
   }
-  const [programmeRow, profileRow] = await Promise.all([
-    getProgrammeRow(body.data.programmeId),
-    getProfileRow(),
+  const [programmeRow, profileRow, customMovementRows] = await Promise.all([
+    getProgrammeRow(body.data.programmeId, req.auth!.id),
+    getProfileRow(req.auth!.id),
+    db.select().from(movementsTable).where(eq(movementsTable.ownerUserId, req.auth!.id)),
   ]);
   if (!programmeRow) {
     res.status(404).json({ error: "Programme not found" });
@@ -336,21 +521,40 @@ router.post("/workouts", async (req, res): Promise<void> => {
     return;
   }
   const profile = profileResponse(profileRow);
+  const movementsById = new Map(
+    [...STANDARD_MOVEMENTS, ...customMovementRows].map((movement) => [
+      movement.id,
+      { name: movement.name, category: movement.category },
+    ]),
+  );
   const sets: WorkoutSet[] = session.exercises.flatMap((exercise) =>
-    Array.from({ length: exercise.sets }, (_, index) => ({
-      id: programmeRow.id * 100000 + session.sessionNumber * 1000 + exercise.order! * 100 + index + 1,
-      exercise: exercise.exercise,
-      setNumber: index + 1,
-      totalSets: exercise.sets,
-      reps: exercise.reps,
-      percentage: exercise.percentage,
-      weight: Math.round((exercisePb(profile, exercise.exercise) * exercise.percentage / 100 / profile.roundingIncrement)) * profile.roundingIncrement,
-      status: "pending" as const,
-      attemptNumber: 1,
-      completedAt: null,
-    })),
+    Array.from({ length: exercise.sets }, (_, index) => {
+      const movementId = movementIdOf(exercise);
+      const targetWeight = exercise.weight ?? calculatedTargetWeight(
+        profile,
+        movementId,
+        exercise.percentage ?? 0,
+        movementsById.get(movementId),
+      );
+
+      return {
+        id: programmeRow.id * 100000 + session.sessionNumber * 1000 + exercise.order! * 100 + index + 1,
+        movementId,
+        exercise: movementId,
+        setNumber: index + 1,
+        totalSets: exercise.sets,
+        reps: exercise.reps,
+        percentage: exercise.percentage,
+        weight: targetWeight,
+        equipment: exercise.equipment,
+        status: "pending" as const,
+        attemptNumber: 1,
+        completedAt: null,
+      };
+    }),
   );
   const [row] = await db.insert(workoutsTable).values({
+    userId: req.auth!.id,
     programmeId: programmeRow.id,
     programmeName: programmeRow.name,
     sessionNumber: session.sessionNumber,
@@ -370,12 +574,108 @@ router.get("/workouts/:workoutId", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const row = await getWorkoutRow(params.data.workoutId);
+  let row = await getWorkoutRow(params.data.workoutId, req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Workout not found" });
     return;
   }
+
+  const pendingSets = row.sets as WorkoutSet[];
+  const needsTargetRepair = pendingSets.some((set) =>
+    set.status === "pending" &&
+    set.percentage != null &&
+    set.percentage > 0 &&
+    set.weight === 0,
+  );
+  if (needsTargetRepair) {
+    const [profileRow, customMovementRows] = await Promise.all([
+      getProfileRow(req.auth!.id),
+      db.select().from(movementsTable).where(eq(movementsTable.ownerUserId, req.auth!.id)),
+    ]);
+    if (profileRow) {
+      const profile = profileResponse(profileRow);
+      const movementsById = new Map(
+        [...STANDARD_MOVEMENTS, ...customMovementRows].map((movement) => [
+          movement.id,
+          { name: movement.name, category: movement.category },
+        ]),
+      );
+      let repaired = false;
+      const sets = pendingSets.map((set) => {
+        if (
+          set.status !== "pending" ||
+          set.percentage == null ||
+          set.percentage <= 0 ||
+          set.weight !== 0
+        ) {
+          return set;
+        }
+        const movementId = set.movementId ?? set.exercise;
+        const weight = calculatedTargetWeight(
+          profile,
+          movementId,
+          set.percentage,
+          movementsById.get(movementId),
+        );
+        if (weight <= 0) return set;
+        repaired = true;
+        return { ...set, weight };
+      });
+      if (repaired) {
+        const [updated] = await db.update(workoutsTable)
+          .set({ sets })
+          .where(eq(workoutsTable.id, row.id))
+          .returning();
+        row = updated;
+      }
+    }
+  }
+
   res.json(GetWorkoutResponse.parse(workoutResponse(row)));
+});
+
+router.patch("/workouts/:workoutId/sets/:setId", async (req, res): Promise<void> => {
+  const params = UpdateWorkoutSetParams.safeParse({
+    workoutId: parseIdParam(req.params.workoutId),
+    setId: parseIdParam(req.params.setId),
+  });
+  const body = UpdateWorkoutSetBody.safeParse(req.body);
+  if (!params.success || !body.success) {
+    res.status(400).json({ error: !params.success ? params.error.message : body.error?.message ?? "Invalid request body" });
+    return;
+  }
+  const row = await getWorkoutRow(params.data.workoutId, req.auth!.id);
+  if (!row) {
+    res.status(404).json({ error: "Workout not found" });
+    return;
+  }
+  const sets = [...(row.sets as WorkoutSet[])];
+  const set = sets.find((item) => item.id === params.data.setId);
+  if (!set) {
+    res.status(404).json({ error: "Set not found" });
+    return;
+  }
+
+  set.weight = body.data.weight;
+  if (body.data.equipment !== undefined) {
+    set.equipment = body.data.equipment;
+  }
+  for (const pendingSet of sets) {
+    if (
+      pendingSet.status === "pending" &&
+      pendingSet.id !== set.id &&
+      pendingSet.setNumber > set.setNumber &&
+      sameMovement(pendingSet, set)
+    ) {
+      pendingSet.weight = body.data.weight;
+      if (body.data.equipment !== undefined) {
+        pendingSet.equipment = body.data.equipment;
+      }
+    }
+  }
+
+  const [updated] = await db.update(workoutsTable).set({ sets }).where(eq(workoutsTable.id, row.id)).returning();
+  res.json(UpdateWorkoutSetResponse.parse(workoutResponse(updated)));
 });
 
 router.post("/workouts/:workoutId/sets/:setId/complete", async (req, res): Promise<void> => {
@@ -392,7 +692,7 @@ router.post("/workouts/:workoutId/sets/:setId/complete", async (req, res): Promi
     res.status(400).json({ error: body.error.message });
     return;
   }
-  const row = await getWorkoutRow(params.data.workoutId);
+  const row = await getWorkoutRow(params.data.workoutId, req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Workout not found" });
     return;
@@ -407,7 +707,7 @@ router.post("/workouts/:workoutId/sets/:setId/complete", async (req, res): Promi
     set.weight = body.data.weight;
     const nextSet = sets.find((item) =>
       item.status === "pending" &&
-      item.exercise === set.exercise &&
+      sameMovement(item, set) &&
       item.id !== set.id &&
       item.setNumber > set.setNumber,
     );
@@ -438,7 +738,7 @@ router.post("/workouts/:workoutId/sets/:setId/miss", async (req, res): Promise<v
     res.status(400).json({ error: !params.success ? params.error.message : body.error?.message ?? "Invalid request body" });
     return;
   }
-  const row = await getWorkoutRow(params.data.workoutId);
+  const row = await getWorkoutRow(params.data.workoutId, req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Workout not found" });
     return;
@@ -474,7 +774,7 @@ router.post("/workouts/:workoutId/finish", async (req, res): Promise<void> => {
     res.status(400).json({ error: params.error.message });
     return;
   }
-  const row = await getWorkoutRow(params.data.workoutId);
+  const row = await getWorkoutRow(params.data.workoutId, req.auth!.id);
   if (!row) {
     res.status(404).json({ error: "Workout not found" });
     return;

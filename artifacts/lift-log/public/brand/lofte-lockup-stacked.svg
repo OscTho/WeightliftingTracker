@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 400" role="img" aria-labelledby="title desc">
+  <title id="title">LOFTE stacked lockup</title>
+  <desc id="desc">The Lofte circular plate icon centered above its uppercase wordmark.</desc>
+  <defs>
+    <mask id="arrow-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+      <rect width="256" height="256" fill="#fff"/>
+      <path d="M128 42 72 98h34v116h44V98h34z" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="#D84B32" mask="url(#arrow-cut)" transform="translate(52 16) scale(.75)"/>
+  <text x="180" y="330" text-anchor="middle" fill="#D84B32" font-family="Geist, system-ui, sans-serif" font-size="106" font-weight="700" letter-spacing="-7">LOFTE</text>
+</svg>

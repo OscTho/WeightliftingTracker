@@ -5,8 +5,97 @@
  * Olympic weightlifting workout tracking API
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
+export interface ApiError {
+  error: string;
+}
+
+export interface SignupInput {
+  /**
+     * @minLength 3
+     * @maxLength 20
+     */
+  username: string;
+  email: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface LoginInput {
+  /** @minLength 1 */
+  login: string;
+  /** @minLength 1 */
+  password: string;
+}
+
+export interface PasswordResetConfig {
+  enabled: boolean;
+}
+
+export interface PasswordResetRequestInput {
+  /** @maxLength 254 */
+  email: string;
+}
+
+export interface PasswordResetRequestResult {
+  message: string;
+}
+
+export interface PasswordResetConfirmationInput {
+  /**
+     * @minLength 1
+     * @maxLength 256
+     */
+  token: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface PasswordChangeInput {
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+}
+
+export interface AuthSession {
+  user: AuthUser;
+  /** Opaque session token for native clients; web clients use the HttpOnly cookie. */
+  token?: string;
+}
+
+export type AccountDeletionInputConfirmation = typeof AccountDeletionInputConfirmation[keyof typeof AccountDeletionInputConfirmation];
+
+
+export const AccountDeletionInputConfirmation = {
+  DELETE: 'DELETE',
+} as const;
+
+export interface AccountDeletionInput {
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  password: string;
+  confirmation: AccountDeletionInputConfirmation;
+}
+
+export interface ExportedAccount {
+  username: string;
+  email: string;
+  createdAt: string;
 }
 
 export type AthleteProfileRoundingIncrement = typeof AthleteProfileRoundingIncrement[keyof typeof AthleteProfileRoundingIncrement];
@@ -27,6 +116,147 @@ export interface AthleteProfile {
   frontSquatPb: number;
   roundingIncrement: AthleteProfileRoundingIncrement;
   updatedAt: string | null;
+}
+
+/**
+ * Legacy movement identifier retained for workout compatibility
+ */
+export type ExerciseName = string;
+
+export type AccessoryEquipment = typeof AccessoryEquipment[keyof typeof AccessoryEquipment];
+
+
+export const AccessoryEquipment = {
+  kettlebell: 'kettlebell',
+  bands: 'bands',
+  barbell: 'barbell',
+  dumbbell: 'dumbbell',
+} as const;
+
+export interface ProgrammeExerciseInput {
+  /** @minLength 1 */
+  movementId?: string;
+  exercise?: ExerciseName;
+  /**
+     * @minimum 1
+     * @maximum 30
+     */
+  sets: number;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  reps: number;
+  /**
+     * @minimum 1
+     * @maximum 150
+     */
+  percentage?: number;
+  /**
+     * Direct working weight for an accessory movement
+     * @minimum 0
+     */
+  weight?: number;
+  equipment?: AccessoryEquipment;
+}
+
+export type ProgrammeExercise = ProgrammeExerciseInput & {
+  id: number;
+  order: number;
+} & Required<Pick<ProgrammeExerciseInput & {
+  id: number;
+  order: number;
+}, 'movementId'>>;
+
+export interface ProgrammeSession {
+  id: number;
+  sessionNumber: number;
+  name: string;
+  exercises: ProgrammeExercise[];
+}
+
+export interface Programme {
+  id: number;
+  name: string;
+  sessionsPerWeek: number;
+  lengthWeeks: number;
+  sessions: ProgrammeSession[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorkoutStatus = typeof WorkoutStatus[keyof typeof WorkoutStatus];
+
+
+export const WorkoutStatus = {
+  in_progress: 'in_progress',
+  completed: 'completed',
+} as const;
+
+export type WorkoutSetStatus = typeof WorkoutSetStatus[keyof typeof WorkoutSetStatus];
+
+
+export const WorkoutSetStatus = {
+  pending: 'pending',
+  completed: 'completed',
+  missed: 'missed',
+  skipped: 'skipped',
+} as const;
+
+export interface WorkoutSet {
+  movementId?: string;
+  id: number;
+  exercise: ExerciseName;
+  setNumber: number;
+  totalSets: number;
+  reps: number;
+  percentage?: number;
+  weight: number;
+  equipment?: AccessoryEquipment;
+  status: WorkoutSetStatus;
+  attemptNumber: number;
+  /** @nullable */
+  completedAt?: string | null;
+}
+
+export interface Workout {
+  id: number;
+  programmeId: number;
+  programmeName: string;
+  sessionNumber: number;
+  sessionName: string;
+  status: WorkoutStatus;
+  startedAt: string;
+  /** @nullable */
+  completedAt?: string | null;
+  completedSets: number;
+  missedSets: number;
+  attempts: number;
+  sets: WorkoutSet[];
+}
+
+export interface Movement {
+  id: string;
+  name: string;
+  category: string;
+  /** @nullable */
+  description?: string | null;
+  isCustom: boolean;
+  /** @nullable */
+  userId: string | null;
+}
+
+export interface AccountDataExport {
+  exportedAt: string;
+  account: ExportedAccount;
+  profile: AthleteProfile | null;
+  programmes: Programme[];
+  workouts: Workout[];
+  customMovements: Movement[];
+}
+
+export interface HealthStatus {
+  status: string;
 }
 
 export type AthleteProfileInputRoundingIncrement = typeof AthleteProfileInputRoundingIncrement[keyof typeof AthleteProfileInputRoundingIncrement];
@@ -52,33 +282,19 @@ export interface AthleteProfileInput {
   roundingIncrement: AthleteProfileInputRoundingIncrement;
 }
 
-export type ExerciseName = typeof ExerciseName[keyof typeof ExerciseName];
-
-
-export const ExerciseName = {
-  snatch: 'snatch',
-  clean_and_jerk: 'clean_and_jerk',
-  back_squat: 'back_squat',
-  front_squat: 'front_squat',
-} as const;
-
-export interface ProgrammeExerciseInput {
-  exercise: ExerciseName;
+export interface MovementInput {
   /**
-     * @minimum 1
-     * @maximum 30
+     * @minLength 1
+     * @maxLength 80
      */
-  sets: number;
+  name: string;
   /**
-     * @minimum 1
-     * @maximum 20
+     * @minLength 1
+     * @maxLength 40
      */
-  reps: number;
-  /**
-     * @minimum 1
-     * @maximum 150
-     */
-  percentage: number;
+  category: string;
+  /** @maxLength 240 */
+  description?: string;
 }
 
 export interface ProgrammeSessionInput {
@@ -107,28 +323,6 @@ export interface ProgrammeInput {
   sessions: ProgrammeSessionInput[];
 }
 
-export type ProgrammeExercise = ProgrammeExerciseInput & {
-  id: number;
-  order: number;
-};
-
-export interface ProgrammeSession {
-  id: number;
-  sessionNumber: number;
-  name: string;
-  exercises: ProgrammeExercise[];
-}
-
-export interface Programme {
-  id: number;
-  name: string;
-  sessionsPerWeek: number;
-  lengthWeeks: number;
-  sessions: ProgrammeSession[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface ProgrammeSummary {
   id: number;
   name: string;
@@ -152,52 +346,13 @@ export interface CompleteSetInput {
   weight?: number;
 }
 
-export type WorkoutSetStatus = typeof WorkoutSetStatus[keyof typeof WorkoutSetStatus];
-
-
-export const WorkoutSetStatus = {
-  pending: 'pending',
-  completed: 'completed',
-  missed: 'missed',
-  skipped: 'skipped',
-} as const;
-
-export interface WorkoutSet {
-  id: number;
-  exercise: ExerciseName;
-  setNumber: number;
-  totalSets: number;
-  reps: number;
-  percentage: number;
+/**
+ * The load and optional accessory equipment to save for this set and carry into later pending sets of the same movement.
+ */
+export interface WorkoutSetUpdate {
+  /** @exclusiveMinimum 0 */
   weight: number;
-  status: WorkoutSetStatus;
-  attemptNumber: number;
-  /** @nullable */
-  completedAt?: string | null;
-}
-
-export type WorkoutStatus = typeof WorkoutStatus[keyof typeof WorkoutStatus];
-
-
-export const WorkoutStatus = {
-  in_progress: 'in_progress',
-  completed: 'completed',
-} as const;
-
-export interface Workout {
-  id: number;
-  programmeId: number;
-  programmeName: string;
-  sessionNumber: number;
-  sessionName: string;
-  status: WorkoutStatus;
-  startedAt: string;
-  /** @nullable */
-  completedAt?: string | null;
-  completedSets: number;
-  missedSets: number;
-  attempts: number;
-  sets: WorkoutSet[];
+  equipment?: AccessoryEquipment;
 }
 
 export interface PbSet {
@@ -237,4 +392,9 @@ export const MissSetInputAction = {
 export interface MissSetInput {
   action: MissSetInputAction;
 }
+
+/**
+ * Request error
+ */
+export type ApiErrorResponse = ApiError;
 

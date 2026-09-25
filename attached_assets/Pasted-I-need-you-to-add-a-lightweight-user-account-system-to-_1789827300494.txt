@@ -1,0 +1,476 @@
+I need you to add a lightweight user account system to the existing Lofte app.
+
+## Context
+
+Lofte is an Olympic weightlifting workout tracker that I am building in Replit. The existing app already has working functionality for:
+
+* Creating programmes
+* Adding movements/exercises to programmes
+* Setting sets, reps and % of PB
+* Recording PBs
+* Running/completing workouts
+* The existing workout tracker UI and functionality
+
+Do **not** rebuild or redesign these existing features. The goal of this task is to add simple authentication and persistent user data around the existing functionality.
+
+The project is also connected to GitHub, so keep the existing project structure and codebase intact.
+
+---
+
+# 1. Authentication
+
+Create a very simple account system.
+
+### Sign up
+
+Required fields:
+
+* Username
+* Email
+* Password
+
+Requirements:
+
+* Username must be unique
+* Username should be 3–20 characters
+* Allow letters, numbers and underscores
+* Username uniqueness should be case-insensitive
+* Email must be unique
+* Password should be securely hashed
+* No social login
+* No email verification
+* No additional profile information
+
+### Log in
+
+Users should log in using:
+
+* Email
+* Password
+
+Include:
+
+* Clear validation errors
+* Incorrect email/password error
+* Log out functionality
+
+### Password reset
+
+Include a basic "Forgot password?" flow if this can be implemented cleanly with the existing Replit/database setup.
+
+Do not add unnecessary authentication features.
+
+---
+
+# 2. Login persistence
+
+Users should remain logged in when they:
+
+* Refresh the page
+* Close and reopen the app
+* Return to Lofte later
+
+Use a secure session/token approach appropriate for the existing application architecture.
+
+Do not store passwords or sensitive authentication information in localStorage.
+
+---
+
+# 3. App access
+
+For now, use this flow:
+
+### Logged out
+
+When someone opens Lofte:
+
+> Log in / Sign up
+
+They should not enter the main application until authenticated.
+
+### Logged in
+
+After successful login/signup:
+
+> Lofte → main app
+
+Keep the existing Lofte experience as intact as possible.
+
+Do not introduce a complicated dashboard.
+
+---
+
+# 4. Basic account/profile screen
+
+Create a very simple account area.
+
+It only needs to show:
+
+* Username
+* Email
+* Current PBs
+* Saved programmes
+* Log out
+
+This is primarily for testing and account management.
+
+Do NOT add:
+
+* Profile pictures
+* Bios
+* Followers
+* Following
+* Activity feeds
+* Social features
+* Privacy settings
+* Account deletion
+* Public profiles
+
+These are not part of the MVP.
+
+---
+
+# 5. User database
+
+Create a proper user record.
+
+Conceptually:
+
+User
+
+* id
+* username
+* email
+* password_hash
+* created_at
+* updated_at
+
+Use the simplest appropriate database available within the existing Replit project.
+
+Before implementing anything, inspect the existing project to determine whether a database or persistence layer is already being used.
+
+If one already exists, use it rather than introducing an unnecessary second database.
+
+---
+
+# 6. PBs
+
+The existing PB functionality should become user-specific.
+
+Each user's PBs must be associated with their user ID.
+
+Current PB movements are:
+
+* Snatch
+* Clean & Jerk
+* Back Squat
+* Front Squat
+
+For now, each movement only needs to have a **current PB**.
+
+The existing PB functionality should continue working exactly as it does now.
+
+For example:
+
+User A:
+
+* Snatch: 100kg
+* Clean & Jerk: 125kg
+* Back Squat: 160kg
+* Front Squat: 140kg
+
+User B should have completely separate PB data.
+
+One user's PBs must never be visible to another user.
+
+If the existing application already stores PB data locally, migrate/replace that storage so it is associated with the authenticated user.
+
+---
+
+# 7. Programmes
+
+Existing programme functionality should also become user-specific.
+
+Each programme must belong to a user.
+
+A programme should continue supporting the existing functionality, including:
+
+* Programme name
+* Sessions
+* Exercises/movements
+* Sets
+* Reps
+* % PB
+* Any other programme fields that already exist
+
+For example:
+
+User A:
+
+Programme: "Olympic Strength"
+
+* Monday
+* Wednesday
+* Friday
+
+User B should not see or access User A's programme.
+
+Programmes are PRIVATE for now.
+
+Do not build programme sharing or public programmes yet.
+
+---
+
+# 8. Completed workout history
+
+The existing workout tracker already allows users to complete workouts.
+
+If completed workout data is currently being recorded, persist that data against the authenticated user as well.
+
+For example:
+
+User → Workout → exercises → sets/reps/weight/results
+
+A user's completed workouts should remain available when they log out and back in.
+
+Do not build a sophisticated workout-history UI if one doesn't already exist.
+
+The important thing is that the underlying data belongs to the correct user.
+
+---
+
+# 9. Existing movement library
+
+Preserve the existing movement library functionality.
+
+This includes the current movement selection/creation experience.
+
+If users can create custom movements, make sure those custom movements are associated with their user account rather than being globally shared.
+
+The existing movement library itself can remain global/shared.
+
+---
+
+# 10. Data security / authorisation
+
+This is important.
+
+Do not rely solely on the frontend to determine which data a user can access.
+
+Every API/database request involving:
+
+* PBs
+* Programmes
+* Workouts
+* Custom movements
+
+must verify the authenticated user's identity and only return/modify records belonging to that user.
+
+For example:
+
+User A should not be able to access User B's programme simply by changing an ID in a request.
+
+Use the authenticated user's ID server-side when querying or modifying user-owned data.
+
+---
+
+# 11. Existing local/test data
+
+The current Lofte app already has test data for PBs, programmes and the workout tracker.
+
+Preserve existing functionality and data where practical.
+
+However, do not let migration complexity significantly increase the scope of this task.
+
+If existing local/test data cannot safely be migrated into user accounts, clearly explain what will happen before removing it.
+
+The priority is:
+
+1. Working authentication
+2. Correct user-specific data
+3. Existing Lofte functionality continuing to work
+4. Minimal complexity
+
+---
+
+# 12. UI
+
+Keep the UI consistent with the existing Lofte design.
+
+Lofte should feel:
+
+* Strong
+* Focused
+* Clear
+* Modern
+* Simple
+
+Do not redesign the application.
+
+The login/signup screens should be very minimal.
+
+### Login
+
+* Lofte logo/name
+* Email
+* Password
+* Log in
+* Forgot password
+* Link to Sign up
+
+### Sign up
+
+* Lofte logo/name
+* Username
+* Email
+* Password
+* Create account
+* Link to Log in
+
+Keep these screens mobile-friendly.
+
+Do not add onboarding screens.
+
+---
+
+# 13. Error handling
+
+Provide clear, simple messages for:
+
+* Invalid email
+* Invalid password
+* Email already registered
+* Username already taken
+* Invalid username
+* Password too short/invalid
+* Login failure
+* Session expiry
+* Network/server errors
+
+Do not expose technical/database errors to the user.
+
+---
+
+# 14. Important implementation approach
+
+Before making changes:
+
+1. Inspect the existing Lofte codebase.
+2. Identify the current frontend architecture.
+3. Identify the current backend/API architecture, if one exists.
+4. Identify how PBs are currently stored.
+5. Identify how programmes are currently stored.
+6. Identify how workout data is currently stored.
+7. Identify whether a database already exists.
+8. Identify the current movement-library implementation.
+
+Then implement authentication **around the existing architecture**.
+
+Do not rewrite the app.
+
+Do not replace working components unnecessarily.
+
+Do not change the existing workout experience unless required to connect it to authenticated user data.
+
+---
+
+# 15. Database relationships
+
+Use a straightforward relational structure if the existing application supports it.
+
+Conceptually:
+
+Users
+↓
+Programmes
+↓
+Programme Sessions
+↓
+Programme Exercises
+
+Users
+↓
+PBs
+
+Users
+↓
+Workouts
+↓
+Workout Exercises / Sets
+
+Users
+↓
+Custom Movements
+
+The exact schema should follow the existing application's architecture rather than blindly creating these tables if equivalent structures already exist.
+
+Every user-owned record should have a clear relationship back to the user.
+
+---
+
+# 16. Acceptance criteria
+
+The task is complete when I can:
+
+### New user
+
+1. Open Lofte
+2. Create an account with username, email and password
+3. Automatically enter the app
+4. Add my PBs
+5. Create a programme
+6. Complete a workout
+7. Close the browser
+8. Return later
+9. Still be logged in
+10. Still have my PBs, programme and workout data
+
+### Second user
+
+I can create a second account and confirm that:
+
+* They have their own PBs
+* They have their own programmes
+* They have their own workout data
+* They cannot see the first user's private data
+
+### Logout
+
+I can log out and:
+
+* Be returned to the login screen
+* No longer access authenticated data
+* Log back in and see all my previous data
+
+---
+
+# 17. Keep scope tight
+
+This is an MVP feature intended to allow real people to test Lofte.
+
+Do NOT build:
+
+* Social login
+* Email verification
+* Followers/following
+* Public profiles
+* Programme sharing
+* Likes/comments
+* Notifications
+* Advanced account settings
+* Account deletion
+* Subscription/payment functionality
+* Admin dashboards
+* Complex onboarding
+
+Focus on **simple authentication + persistent user-owned Lofte data**.
+
+After implementation, test the complete signup → PB → programme → workout → logout → login flow and fix any issues you find.
+
+Finally, give me a concise summary of:
+
+* What authentication approach you used
+* What database/persistence system you used
+* What data was migrated
+* Any changes made to the existing Lofte architecture
+* Any limitations or follow-up work needed

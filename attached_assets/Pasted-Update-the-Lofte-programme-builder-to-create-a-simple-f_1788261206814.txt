@@ -1,0 +1,392 @@
+Update the Lofte programme builder to create a simple, fast movement-selection experience.
+
+## Core user flow
+
+When a user is creating a programme and wants to add an exercise/movement, they should NOT immediately see the entire movement library.
+
+Instead, show a short list of the most common Olympic weightlifting movements:
+
+1. Snatch
+2. Clean
+3. Jerk
+4. Back Squat
+5. Front Squat
+6. Clean Pull
+7. Snatch Pull
+
+Below these movements, show a secondary button:
+
+**Explore movement library**
+
+The goal is to make adding the most common movements extremely fast while still giving users access to the full movement library.
+
+---
+
+## Step 1 — Programme movement selection
+
+On the programme creation screen, create an "Add movement" section.
+
+Display the seven common movements as selectable options.
+
+The layout should be optimised for mobile and make selecting a movement feel instant.
+
+For example:
+
+**Add movement**
+
+Snatch
+Clean
+Jerk
+Back Squat
+Front Squat
+Clean Pull
+Snatch Pull
+
+**Explore movement library**
+
+The exact visual treatment should follow the existing Lofte design system.
+
+Do not make every option look like a large card. Keep the UI compact and clean.
+
+---
+
+## Step 2 — Explore movement library
+
+When the user taps **Explore movement library**, open a modal/bottom sheet that contains the full movement library.
+
+The library should contain approximately 30–40 common Olympic weightlifting movements.
+
+Organise movements into categories:
+
+### Competition Lifts
+
+* Snatch
+* Clean & Jerk
+* Clean
+* Jerk
+
+### Snatch Variations
+
+* Power Snatch
+* Hang Snatch
+* High Hang Snatch
+* Block Snatch
+* Muscle Snatch
+* Snatch from Blocks
+* Snatch Pull
+* Snatch High Pull
+* Snatch Balance
+* Overhead Squat
+
+### Clean Variations
+
+* Power Clean
+* Hang Clean
+* High Hang Clean
+* Block Clean
+* Muscle Clean
+* Clean from Blocks
+* Clean Pull
+* Clean High Pull
+* Clean Deadlift
+
+### Jerk Variations
+
+* Power Jerk
+* Push Jerk
+* Split Jerk
+* Hang Jerk
+* Jerk from Blocks
+* Jerk Balance
+* Tall Jerk
+* Jerk Dip
+* Jerk Drive
+
+### Squats
+
+* Back Squat
+* Front Squat
+* Pause Back Squat
+* Pause Front Squat
+* Tempo Back Squat
+* Tempo Front Squat
+* Overhead Squat
+
+### Accessories
+
+* Romanian Deadlift
+* Deadlift
+* Good Morning
+* Bulgarian Split Squat
+* Walking Lunge
+* Reverse Lunge
+* Step-Up
+* Hip Thrust
+* Nordic Curl
+* Back Extension
+
+You can include additional common movements if needed, but keep the initial library focused rather than trying to include every possible weightlifting exercise.
+
+---
+
+## Movement library UX
+
+The modal/bottom sheet should include:
+
+* Search input
+* Category filters
+* List of movements
+* "Add new movement" option
+
+Users should be able to quickly search for a movement rather than scrolling through the entire list.
+
+Example:
+
+Search: "hang"
+
+Results:
+
+* Hang Snatch
+* High Hang Snatch
+* Hang Clean
+* High Hang Clean
+* Hang Jerk
+
+---
+
+## Step 3 — Selecting a movement
+
+When the user selects a movement from either:
+
+* The seven common movements
+* The movement library
+
+they should be taken BACK to the programme creation screen.
+
+Do not open a separate movement detail screen at this stage.
+
+The selected movement should immediately appear as an exercise in the programme builder.
+
+For example:
+
+**Snatch**
+
+Sets: 3
+Reps: 2
+Weight / %: [input]
+
+The user can then configure:
+
+* Sets
+* Reps
+* Percentage of PB
+* Weight
+* Rest
+* Other programme-specific fields that already exist
+
+The exact fields should use the existing programme-builder functionality if it already exists.
+
+---
+
+# Add New Movement
+
+The movement library must also contain:
+
+**+ Add new movement**
+
+This allows a user to create a movement that isn't included in the standard Lofte library.
+
+When tapped, open a simple form:
+
+### Add new movement
+
+**Movement name**
+[ Enter movement name ]
+
+**Category**
+[ Select category ]
+
+Optional:
+
+**Description**
+[ Add description ]
+
+Button:
+
+**Add movement**
+
+---
+
+## Custom movement behaviour
+
+When the user creates a new movement:
+
+1. Save the movement to their user profile.
+2. Give it a unique/stable ID.
+3. Mark it as a custom/user-created movement.
+4. Immediately make it available to that user in the movement library.
+5. Allow the user to select it and add it to their programme.
+6. Do NOT make custom movements visible to other users.
+
+The movement data model should therefore distinguish between:
+
+### Standard Lofte movements
+
+Available to all users.
+
+### User-created movements
+
+Available only to the user who created them.
+
+For example:
+
+{
+id: "snatch",
+name: "Snatch",
+category: "Competition Lift",
+isCustom: false,
+userId: null
+}
+
+A custom movement could look like:
+
+{
+id: "custom-123",
+name: "Paused Hang Snatch",
+category: "Snatch Variation",
+isCustom: true,
+userId: "user-456"
+}
+
+Use the existing authenticated user/database architecture.
+
+---
+
+# Important UX behaviour
+
+The movement selection experience should work like this:
+
+**Programme Builder**
+
+↓
+
+**Add Movement**
+
+↓
+
+Show:
+
+Snatch
+Clean
+Jerk
+Back Squat
+Front Squat
+Clean Pull
+Snatch Pull
+
+**Explore movement library**
+
+↓
+
+Full movement library modal
+
+↓
+
+User selects movement
+
+↓
+
+Modal closes
+
+↓
+
+User returns to Programme Builder
+
+↓
+
+Selected movement is added
+
+↓
+
+User enters sets/reps/%/weight
+
+This should feel like one continuous flow.
+
+---
+
+# Design principles
+
+The experience should be:
+
+* Fast
+* Minimal
+* Mobile-first
+* Easy to understand
+* Optimised for repeat use
+
+The user should not feel like they're "managing a database of exercises".
+
+They should feel like they're simply adding an exercise to their programme.
+
+Use the existing Lofte design system.
+
+Maintain the existing Lofte visual direction:
+
+* Strong
+* Focused
+* Modern
+* Clear
+* Serious training tool
+* Community-oriented
+
+Avoid:
+
+* Large generic cards
+* Excessive icons
+* Gradients
+* Clutter
+* Unnecessary descriptions
+* Generic fitness-app styling
+* AI-style UI
+* Overly complicated navigation
+
+---
+
+# Technical requirements
+
+Before making changes, inspect the existing Lofte programme builder and database architecture.
+
+Reuse existing components and patterns wherever possible.
+
+Do not rebuild existing programme functionality.
+
+The movement library should be a reusable data source that can later support:
+
+* Workout tracking
+* PB tracking
+* Movement history
+* Volume calculations
+* Programme templates
+* Movement analytics
+* Community features
+
+Programme exercises should reference a movement ID rather than simply storing the movement name.
+
+Make sure custom movements are scoped to the authenticated user.
+
+Test the complete flow:
+
+1. Create programme
+2. Add Snatch from the common movement list
+3. Configure sets/reps
+4. Add another movement
+5. Open Explore movement library
+6. Search for a movement
+7. Select a movement
+8. Confirm it returns to the programme builder
+9. Add a custom movement
+10. Confirm the custom movement appears in that user's library
+11. Confirm another user cannot see the custom movement
+12. Confirm the custom movement can be added to a programme
+
+Do not add unnecessary functionality beyond this scope.

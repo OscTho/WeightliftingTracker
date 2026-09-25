@@ -8,11 +8,6 @@ import * as Haptics from 'expo-haptics';
 import { getGetDashboardQueryKey, getGetWorkoutQueryKey, useGetDashboard, useStartWorkout } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 
-const sessionItems = [
-  { date: 'YESTERDAY', name: 'Clean & Jerk Heavy Singles', sets: '12 working sets' },
-  { date: '08 AUG', name: 'Power Snatch', sets: '10 working sets' },
-];
-
 function StatusBarMock({ colors }: { colors: ReturnType<typeof useColors> }) {
   if (Platform.OS !== 'web') return null;
   return (
@@ -42,6 +37,9 @@ export default function TrackDashboard() {
   const queryClient = useQueryClient();
   const { data: dashboard } = useGetDashboard();
   const startWorkout = useStartWorkout();
+  const recentWorkouts = dashboard?.recentWorkouts ?? [];
+  const sessionsThisWeek = recentWorkouts.filter((workout) => workout.completedSets > 0).length;
+  const nextSessionSets = dashboard?.nextSession?.exercises.reduce((total, exercise) => total + exercise.sets, 0) ?? 0;
 
   const startSession = () => {
     if (!dashboard?.programme || !dashboard.nextSession || startWorkout.isPending) return;
@@ -77,32 +75,45 @@ export default function TrackDashboard() {
         </View>
 
         <View style={[styles.workoutCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.ghostNumber, { color: colors.mutedForeground }]}>01</Text>
-          <View style={styles.workoutHeader}>
-            <Text style={[styles.workoutEyebrow, { color: colors.secondary }]}>WEEK 1 SESSION 1</Text>
-            <Text style={[styles.workoutTitle, { color: colors.foreground }]}>SNATCH &amp; Front Squats</Text>
-            <Text style={[styles.workoutMeta, { color: colors.mutedForeground }]}>5 MOVEMENTS · 16 WORKING SETS</Text>
-          </View>
-          <Pressable
-            onPress={startSession}
-            disabled={startWorkout.isPending}
-            style={({ pressed }) => [styles.startButton, { backgroundColor: colors.primary, opacity: pressed || startWorkout.isPending ? 0.8 : 1 }]}
-            testID="button-start-workout"
-          >
-            {startWorkout.isPending ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.startText, { color: colors.primaryForeground }]}>START SESSION</Text>}
-          </Pressable>
+          {dashboard?.programme && dashboard.nextSession ? (
+            <>
+              <Text style={[styles.ghostNumber, { color: colors.mutedForeground }]}>{String(dashboard.nextSession.sessionNumber).padStart(2, '0')}</Text>
+              <View style={styles.workoutHeader}>
+                <Text style={[styles.workoutEyebrow, { color: colors.secondary }]}>NEXT SESSION · {dashboard.programme.name}</Text>
+                <Text style={[styles.workoutTitle, { color: colors.foreground }]}>{dashboard.nextSession.name}</Text>
+                <Text style={[styles.workoutMeta, { color: colors.mutedForeground }]}>{dashboard.nextSession.exercises.length} MOVEMENTS · {nextSessionSets} WORKING SETS</Text>
+              </View>
+              <Pressable
+                onPress={startSession}
+                disabled={startWorkout.isPending}
+                style={({ pressed }) => [styles.startButton, { backgroundColor: colors.primary, opacity: pressed || startWorkout.isPending ? 0.8 : 1 }]}
+                testID="button-start-workout"
+              >
+                {startWorkout.isPending ? <ActivityIndicator color={colors.primaryForeground} /> : <Text style={[styles.startText, { color: colors.primaryForeground }]}>START SESSION</Text>}
+              </Pressable>
+            </>
+          ) : (
+            <View style={styles.emptyWorkout}>
+              <Text style={[styles.workoutEyebrow, { color: colors.mutedForeground }]}>NO ACTIVE PROGRAMME</Text>
+              <Text style={[styles.workoutTitle, { color: colors.foreground }]}>READY WHEN YOU ARE.</Text>
+              <Text style={[styles.workoutMeta, { color: colors.mutedForeground }]}>Create a programme to plan your next session.</Text>
+              <Pressable onPress={() => router.push('/plans')} style={[styles.startButton, { backgroundColor: colors.primary }]} testID="button-create-first-programme">
+                <Text style={[styles.startText, { color: colors.primaryForeground }]}>CREATE PROGRAMME</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>WEEKLY STATISTICS</Text>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.statNumber, { color: colors.foreground }]}>4/5</Text>
+              <Text style={[styles.statNumber, { color: colors.foreground }]}>{sessionsThisWeek}/{dashboard?.programme?.sessionsPerWeek ?? 0}</Text>
               <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>SESSIONS</Text>
             </View>
             <View style={[styles.statCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.statNumber, { color: colors.foreground }]}>64</Text>
-              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>REPS</Text>
+              <Text style={[styles.statNumber, { color: colors.foreground }]}>{dashboard?.weeklyCompletedSets ?? 0}</Text>
+              <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>SETS</Text>
             </View>
           </View>
         </View>
@@ -113,25 +124,33 @@ export default function TrackDashboard() {
             <Pressable onPress={() => router.push('/history')}><Text style={[styles.seeAll, { color: colors.primary }]}>See all</Text></Pressable>
           </View>
           <View style={styles.recentList}>
-            {sessionItems.map((item) => (
-              <View key={item.name} style={[styles.recentCard, { backgroundColor: colors.card }]}>
+            {recentWorkouts.length > 0 ? recentWorkouts.map((item) => (
+              <Pressable key={item.id} onPress={() => router.push(`/workout/${item.id}`)} style={[styles.recentCard, { backgroundColor: colors.card }]}>
                 <View style={styles.recentDetails}>
-                  <Text style={[styles.recentDate, { color: colors.mutedForeground }]}>{item.date}</Text>
-                  <Text style={[styles.recentTitle, { color: colors.foreground }]}>{item.name}</Text>
-                  <Text style={[styles.recentMeta, { color: colors.mutedForeground }]}>{item.sets}</Text>
+                  <Text style={[styles.recentDate, { color: colors.mutedForeground }]}>{new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short' }).format(new Date(item.date)).toUpperCase()}</Text>
+                  <Text style={[styles.recentTitle, { color: colors.foreground }]}>{item.sessionName}</Text>
+                  <Text style={[styles.recentMeta, { color: colors.mutedForeground }]}>{item.totalSets} working sets</Text>
                 </View>
-                <View style={styles.completeBadge}><Text style={[styles.completeText, { color: colors.success }]}>COMPLETE</Text></View>
+                <View style={[styles.completeBadge, item.missedSets > 0 ? { backgroundColor: colors.destructive + '26' } : undefined]}>
+                  <Text style={[styles.completeText, { color: item.missedSets > 0 ? colors.destructive : item.completedSets === item.totalSets ? colors.success : colors.secondary }]}>
+                    {item.missedSets > 0 ? `${item.missedSets} MISSED` : item.completedSets === item.totalSets ? 'COMPLETE' : 'IN PROGRESS'}
+                  </Text>
+                </View>
+              </Pressable>
+            )) : (
+              <View style={[styles.recentCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.recentMeta, { color: colors.mutedForeground }]}>No sessions recorded yet.</Text>
               </View>
-            ))}
+            )}
           </View>
         </View>
 
         <View style={styles.section}>
           <Pressable onPress={() => router.push('/plans')} style={[styles.programmeCard, { backgroundColor: colors.card }]}>
             <View style={styles.programmeDetails}>
-              <Text style={[styles.programmeEyebrow, { color: colors.primary }]}>4 SESSIONS / WEEK · 12 WEEKS</Text>
-              <Text style={[styles.programmeTitle, { color: colors.foreground }]}>Solitude Strength{'\n'}v2</Text>
-              <Text style={[styles.programmeCopy, { color: colors.mutedForeground }]}>Squat Intensity, Snatch Speed, Pull Complex, Leg Volume</Text>
+              <Text style={[styles.programmeEyebrow, { color: colors.primary }]}>{dashboard?.programme ? `${dashboard.programme.sessionsPerWeek} SESSIONS / WEEK · ${dashboard.programme.lengthWeeks} WEEKS` : 'NO ACTIVE PROGRAMME'}</Text>
+              <Text style={[styles.programmeTitle, { color: colors.foreground }]}>{dashboard?.programme?.name ?? 'CREATE YOUR FIRST PROGRAMME'}</Text>
+              <Text style={[styles.programmeCopy, { color: colors.mutedForeground }]}>{dashboard?.programme?.sessionNames.join(', ') ?? 'Build a plan to see it here.'}</Text>
             </View>
             <Feather name="chevron-right" size={22} color={colors.mutedForeground} />
           </Pressable>
@@ -161,6 +180,7 @@ const styles = StyleSheet.create({
   workoutCard: { minHeight: 154, borderRadius: 16, padding: 24, gap: 24, overflow: 'hidden' },
   ghostNumber: { position: 'absolute', right: 13, top: -5, fontSize: 84, lineHeight: 92, letterSpacing: 1, fontFamily: 'Inter_700Bold', opacity: 0.28 },
   workoutHeader: { gap: 4 },
+  emptyWorkout: { gap: 8 },
   workoutEyebrow: { fontSize: 11, lineHeight: 14, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.2, textTransform: 'uppercase' },
   workoutTitle: { fontSize: 22, lineHeight: 26, fontFamily: 'Inter_700Bold', letterSpacing: -0.7, textTransform: 'uppercase' },
   workoutMeta: { fontSize: 13, fontFamily: 'Inter_400Regular' },

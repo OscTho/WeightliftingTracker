@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Lofte icon, reverse monochrome</title>
+  <desc id="desc">A solid circular off-white weight plate with an upward arrow cut through its centre.</desc>
+  <defs>
+    <mask id="arrow-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="256" height="256">
+      <rect width="256" height="256" fill="#fff"/>
+      <path d="M128 42 72 98h34v116h44V98h34z" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="128" cy="128" r="112" fill="#F4F0E9" mask="url(#arrow-cut)"/>
+</svg>

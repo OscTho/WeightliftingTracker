@@ -26,7 +26,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm --filter @workspace/lift-log run test:e2e"
+args = "pnpm run test:e2e"
 
 [workflows.workflow.metadata]
 isValidation = true

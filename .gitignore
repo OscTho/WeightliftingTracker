@@ -51,3 +51,5 @@ Thumbs.db
 # Playwright test output
 artifacts/lift-log/e2e-report/
 artifacts/lift-log/test-results/
+artifacts/mockup-sandbox/e2e-report/
+artifacts/mockup-sandbox/test-results/

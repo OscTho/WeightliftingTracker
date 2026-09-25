@@ -7,6 +7,9 @@ info:
 servers:
   - url: /api
     description: Base API path
+security:
+  - cookieAuth: []
+  - bearerAuth: []
 tags:
   - name: health
     description: Health operations
@@ -19,6 +22,156 @@ tags:
   - name: history
     description: Completed training history
 paths:
+  /auth/signup:
+    post:
+      operationId: signup
+      security: []
+      tags: [auth]
+      summary: Create an account and sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/ApiError" }
+        "409": { $ref: "#/components/responses/ApiError" }
+  /auth/login:
+    post:
+      operationId: login
+      security: []
+      tags: [auth]
+      summary: Sign in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginInput" }
+      responses:
+        "200":
+          description: Signed-in account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/ApiError" }
+        "401": { $ref: "#/components/responses/ApiError" }
+  /auth/me:
+    get:
+      operationId: getCurrentSession
+      security: []
+      tags: [auth]
+      summary: Get the current signed-in account
+      responses:
+        "200":
+          description: Current account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "401": { $ref: "#/components/responses/ApiError" }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Revoke the current session
+      responses:
+        "204": { description: Session revoked }
+  /auth/password:
+    put:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change the current athlete's password and replace their session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordChangeInput" }
+      responses:
+        "200":
+          description: Password changed and replacement session created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "400": { $ref: "#/components/responses/ApiError" }
+        "401": { $ref: "#/components/responses/ApiError" }
+        "429": { $ref: "#/components/responses/ApiError" }
+  /auth/password-reset/config:
+    get:
+      operationId: getPasswordResetConfig
+      security: []
+      tags: [auth]
+      summary: Check whether password reset email delivery is configured
+      responses:
+        "200":
+          description: Password reset availability
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasswordResetConfig" }
+  /auth/password-reset/request:
+    post:
+      operationId: requestPasswordReset
+      security: []
+      tags: [auth]
+      summary: Request a password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordResetRequestInput" }
+      responses:
+        "202":
+          description: Request accepted regardless of whether the email is registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasswordResetRequestResult" }
+        "400": { $ref: "#/components/responses/ApiError" }
+        "503": { $ref: "#/components/responses/ApiError" }
+  /auth/password-reset/confirm:
+    post:
+      operationId: confirmPasswordReset
+      security: []
+      tags: [auth]
+      summary: Replace a password using a single-use reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordResetConfirmationInput" }
+      responses:
+        "204": { description: Password changed and existing sessions revoked }
+        "400": { $ref: "#/components/responses/ApiError" }
+  /account/export:
+    get:
+      operationId: exportAccountData
+      tags: [auth]
+      summary: Export all data owned by the current athlete
+      responses:
+        "200":
+          description: Portable account data export
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccountDataExport" }
+        "401": { $ref: "#/components/responses/ApiError" }
+  /account:
+    delete:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Permanently delete the current athlete account and owned data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AccountDeletionInput" }
+      responses:
+        "204": { description: Account permanently deleted }
+        "400": { $ref: "#/components/responses/ApiError" }
+        "401": { $ref: "#/components/responses/ApiError" }
+        "403": { $ref: "#/components/responses/ApiError" }
   /healthz:
     get:
       operationId: healthCheck
@@ -130,6 +283,37 @@ paths:
       responses:
         "204":
           description: Programme deleted
+  /movements:
+    get:
+      operationId: getMovements
+      tags: [programmes]
+      summary: List standard and user-created movements
+      responses:
+        "200":
+          description: Movement library
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Movement"
+    post:
+      operationId: createMovement
+      tags: [programmes]
+      summary: Add a user-created movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MovementInput"
+      responses:
+        "201":
+          description: Created custom movement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Movement"
   /dashboard:
     get:
       operationId: getDashboard
@@ -184,6 +368,27 @@ paths:
       responses:
         "200":
           description: Workout details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workout"
+  /workouts/{workoutId}/sets/{setId}:
+    parameters:
+      - $ref: "#/components/parameters/WorkoutId"
+      - $ref: "#/components/parameters/SetId"
+    patch:
+      operationId: updateWorkoutSet
+      tags: [workouts]
+      summary: Save the load for a workout set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkoutSetUpdate"
+      responses:
+        "200":
+          description: Updated workout
           content:
             application/json:
               schema:
@@ -245,6 +450,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workout"
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: lofte_session
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    ApiError:
+      description: Request error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
   parameters:
     ProgrammeId:
       name: programmeId
@@ -265,6 +484,99 @@ components:
       schema:
         type: integer
   schemas:
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    SignupInput:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string, minLength: 3, maxLength: 20 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8, maxLength: 128 }
+    LoginInput:
+      type: object
+      required: [login, password]
+      properties:
+        login: { type: string, minLength: 1 }
+        password: { type: string, minLength: 1 }
+    PasswordResetConfig:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    PasswordResetRequestInput:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+    PasswordResetRequestResult:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+    PasswordResetConfirmationInput:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string, minLength: 1, maxLength: 256 }
+        password: { type: string, minLength: 8, maxLength: 128 }
+    PasswordChangeInput:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, minLength: 8, maxLength: 128 }
+    AuthUser:
+      type: object
+      required: [id, username, email]
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        email: { type: string, format: email }
+    AuthSession:
+      type: object
+      required: [user]
+      properties:
+        user: { $ref: "#/components/schemas/AuthUser" }
+        token:
+          type: string
+          description: Opaque session token for native clients; web clients use the HttpOnly cookie.
+    AccountDeletionInput:
+      type: object
+      required: [password, confirmation]
+      properties:
+        password: { type: string, minLength: 1, maxLength: 128 }
+        confirmation:
+          type: string
+          enum: [DELETE]
+    AccountDataExport:
+      type: object
+      required: [exportedAt, account, profile, programmes, workouts, customMovements]
+      properties:
+        exportedAt: { type: string, format: date-time }
+        account: { $ref: "#/components/schemas/ExportedAccount" }
+        profile:
+          anyOf:
+            - { $ref: "#/components/schemas/AthleteProfile" }
+            - { type: "null" }
+        programmes:
+          type: array
+          items: { $ref: "#/components/schemas/Programme" }
+        workouts:
+          type: array
+          items: { $ref: "#/components/schemas/Workout" }
+        customMovements:
+          type: array
+          items: { $ref: "#/components/schemas/Movement" }
+    ExportedAccount:
+      type: object
+      required: [username, email, createdAt]
+      properties:
+        username: { type: string }
+        email: { type: string, format: email }
+        createdAt: { type: string, format: date-time }
     HealthStatus:
       type: object
       properties:
@@ -300,15 +612,41 @@ components:
           enum: [1, 2, 2.5]
     ExerciseName:
       type: string
-      enum: [snatch, clean_and_jerk, back_squat, front_squat]
+      description: Legacy movement identifier retained for workout compatibility
+    AccessoryEquipment:
+      type: string
+      enum: [kettlebell, bands, barbell, dumbbell]
+    Movement:
+      type: object
+      required: [id, name, category, isCustom, userId]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        description: { type: ["string", "null"] }
+        isCustom: { type: boolean }
+        userId: { type: ["string", "null"] }
+    MovementInput:
+      type: object
+      required: [name, category]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        category: { type: string, minLength: 1, maxLength: 40 }
+        description: { type: string, maxLength: 240 }
     ProgrammeExerciseInput:
       type: object
-      required: [exercise, sets, reps, percentage]
+      required: [sets, reps]
       properties:
+        movementId: { type: string, minLength: 1 }
         exercise: { $ref: "#/components/schemas/ExerciseName" }
         sets: { type: integer, minimum: 1, maximum: 30 }
         reps: { type: integer, minimum: 1, maximum: 20 }
         percentage: { type: number, minimum: 1, maximum: 150 }
+        weight:
+          type: number
+          minimum: 0
+          description: Direct working weight for an accessory movement
+        equipment: { $ref: "#/components/schemas/AccessoryEquipment" }
     ProgrammeSessionInput:
       type: object
       required: [sessionNumber, name, exercises]
@@ -334,7 +672,7 @@ components:
       allOf:
         - $ref: "#/components/schemas/ProgrammeExerciseInput"
         - type: object
-          required: [id, order]
+          required: [id, order, movementId]
           properties:
             id: { type: integer }
             order: { type: integer }
@@ -384,10 +722,18 @@ components:
       description: Optional actual load used for the set. When supplied, the next pending set of the same exercise uses this load.
       properties:
         weight: { type: number, minimum: 0 }
+    WorkoutSetUpdate:
+      type: object
+      description: The load and optional accessory equipment to save for this set and carry into later pending sets of the same movement.
+      required: [weight]
+      properties:
+        weight: { type: number, exclusiveMinimum: 0 }
+        equipment: { $ref: "#/components/schemas/AccessoryEquipment" }
     WorkoutSet:
       type: object
-      required: [id, exercise, setNumber, totalSets, reps, percentage, weight, status, attemptNumber]
+      required: [id, exercise, setNumber, totalSets, reps, weight, status, attemptNumber]
       properties:
+        movementId: { type: string }
         id: { type: integer }
         exercise: { $ref: "#/components/schemas/ExerciseName" }
         setNumber: { type: integer }
@@ -395,6 +741,7 @@ components:
         reps: { type: integer }
         percentage: { type: number }
         weight: { type: number }
+        equipment: { $ref: "#/components/schemas/AccessoryEquipment" }
         status:
           type: string
           enum: [pending, completed, missed, skipped]

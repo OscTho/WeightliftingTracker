@@ -43,44 +43,40 @@ const REM = 16;
 
 test.describe('Typography scale — computed styles', () => {
 
-  test('type-page-title: 44 px, weight 600, uppercase', async ({ page }) => {
+  test('mobile page title: 44 px, weight 600, uppercase', async ({ page }) => {
     await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
     await page.goto('/');
 
-    const s = await getTypeStyle(page, '.type-page-title');
-    // 2.75rem × 16 = 44 px
+    const s = await getTypeStyle(page, 'h1');
     expect(px(s.fontSize)).toBeCloseTo(2.75 * REM, 0);
     expect(s.fontWeight).toBe('600');
     expect(s.textTransform).toBe('uppercase');
   });
 
-  test('type-section-heading: 24 px, weight 600, uppercase', async ({ page }) => {
-    await setupMocks(page, { history: HISTORY_ITEMS });
-    await page.goto('/history');
+  test('mobile section heading: 24 px, weight 600, uppercase', async ({ page }) => {
+    await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
+    await page.goto('/');
 
-    const s = await getTypeStyle(page, '.type-section-heading');
-    // 1.5rem × 16 = 24 px
+    const s = await getTypeStyle(page, 'h2');
     expect(px(s.fontSize)).toBeCloseTo(1.5 * REM, 0);
     expect(s.fontWeight).toBe('600');
     expect(s.textTransform).toBe('uppercase');
   });
 
-  test('type-subheading: 18 px, weight 600', async ({ page }) => {
-    await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
-    await page.goto('/');
+  test('programme exercise heading: 18 px, weight 600', async ({ page }) => {
+    await setupMocks(page, { programme: PROGRAMME });
+    await page.goto('/programme/1');
 
     const s = await getTypeStyle(page, '.type-subheading');
-    // 1.125rem × 16 = 18 px
     expect(px(s.fontSize)).toBeCloseTo(1.125 * REM, 0);
     expect(s.fontWeight).toBe('600');
   });
 
-  test('type-body-sm: 13 px, weight 400', async ({ page }) => {
-    await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
-    await page.goto('/');
+  test('programme exercise detail: 13 px, weight 400', async ({ page }) => {
+    await setupMocks(page, { programme: PROGRAMME });
+    await page.goto('/programme/1');
 
     const s = await getTypeStyle(page, '.type-body-sm');
-    // 0.8125rem × 16 = 13 px
     expect(px(s.fontSize)).toBeCloseTo(0.8125 * REM, 0);
     expect(s.fontWeight).toBe('400');
   });
@@ -98,23 +94,20 @@ test.describe('Typography scale — computed styles', () => {
     expect(px(s.letterSpacing)).toBeCloseTo(0.1 * (0.6875 * REM), 0);
   });
 
-  test('type-button: 14 px, weight 600', async ({ page }) => {
-    // History empty state has a "Go to Track" CTA with type-button class
-    await setupMocks(page, { history: [] });
-    await page.goto('/history');
+  test('primary dashboard action: 14 px, weight 600', async ({ page }) => {
+    await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
+    await page.goto('/');
 
     const s = await getTypeStyle(page, '.type-button');
-    // 0.875rem × 16 = 14 px
     expect(px(s.fontSize)).toBeCloseTo(0.875 * REM, 0);
     expect(s.fontWeight).toBe('600');
   });
 
   test('text-pb-number: 32 px, weight 600 — stat/PB display', async ({ page }) => {
-    await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
-    await page.goto('/');
+    await setupMocks(page, { workout: WORKOUT_ACTIVE });
+    await page.goto('/workout/99');
 
     const s = await getTypeStyle(page, '.text-pb-number');
-    // 2rem × 16 = 32 px
     expect(px(s.fontSize)).toBeCloseTo(2 * REM, 0);
     expect(s.fontWeight).toBe('600');
   });
@@ -149,29 +142,29 @@ test.describe('Typography layout — key screens', () => {
     await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
     await page.goto('/');
 
-    const titleSize   = await getTypeStyle(page, '.type-page-title');
-    const sectionSize = await getTypeStyle(page, '.type-section-heading');
+    const titleSize   = await getTypeStyle(page, 'h1');
+    const sectionSize = await getTypeStyle(page, 'h2');
     expect(px(titleSize.fontSize)).toBeGreaterThan(px(sectionSize.fontSize));
   });
 
-  test('profile — page title larger than section heading, both uppercase', async ({ page }) => {
+  test('profile — page title larger than mobile section heading, both uppercase', async ({ page }) => {
     await setupMocks(page, { profile: PROFILE });
     await page.goto('/profile');
 
-    const title   = await getTypeStyle(page, '.type-page-title');
-    const section = await getTypeStyle(page, '.type-section-heading');
+    const title   = await getTypeStyle(page, 'h1');
+    const section = await getTypeStyle(page, 'h2');
     expect(px(title.fontSize)).toBeGreaterThan(px(section.fontSize));
     expect(title.textTransform).toBe('uppercase');
     expect(section.textTransform).toBe('uppercase');
   });
 
-  test('history — section heading larger than body-sm', async ({ page }) => {
+  test('history — page title is larger than session text', async ({ page }) => {
     await setupMocks(page, { history: HISTORY_ITEMS });
     await page.goto('/history');
 
-    const heading = await getTypeStyle(page, '.type-section-heading');
-    const body    = await getTypeStyle(page, '.type-body-sm');
-    expect(px(heading.fontSize)).toBeGreaterThan(px(body.fontSize));
+    const heading = await getTypeStyle(page, 'h1');
+    const session = await getTypeStyle(page, '.font-display.text-\\[15px\\]');
+    expect(px(heading.fontSize)).toBeGreaterThan(px(session.fontSize));
   });
 
   test('programme detail — session title larger than exercise label', async ({ page }) => {

@@ -9,6 +9,247 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Create an account and sign in
+ */
+export const signupBodyUsernameMin = 3;
+export const signupBodyUsernameMax = 20;
+
+export const signupBodyPasswordMin = 8;
+export const signupBodyPasswordMax = 128;
+
+
+
+export const SignupBody = zod.object({
+  "username": zod.string().min(signupBodyUsernameMin).max(signupBodyUsernameMax),
+  "email": zod.string().email(),
+  "password": zod.string().min(signupBodyPasswordMin).max(signupBodyPasswordMax)
+})
+
+export const SignupResponse = zod.object({
+  "user": zod.object({
+  "id": zod.number().int(),
+  "username": zod.string(),
+  "email": zod.string().email()
+}),
+  "token": zod.string().optional().describe('Opaque session token for native clients; web clients use the HttpOnly cookie.')
+})
+
+
+/**
+ * @summary Sign in
+ */
+
+
+
+
+export const LoginBody = zod.object({
+  "login": zod.string().min(1),
+  "password": zod.string().min(1)
+})
+
+export const LoginResponse = zod.object({
+  "user": zod.object({
+  "id": zod.number().int(),
+  "username": zod.string(),
+  "email": zod.string().email()
+}),
+  "token": zod.string().optional().describe('Opaque session token for native clients; web clients use the HttpOnly cookie.')
+})
+
+
+/**
+ * @summary Get the current signed-in account
+ */
+export const GetCurrentSessionResponse = zod.object({
+  "user": zod.object({
+  "id": zod.number().int(),
+  "username": zod.string(),
+  "email": zod.string().email()
+}),
+  "token": zod.string().optional().describe('Opaque session token for native clients; web clients use the HttpOnly cookie.')
+})
+
+
+/**
+ * @summary Revoke the current session
+ */
+export const LogoutResponse = zod.void()
+
+
+/**
+ * @summary Change the current athlete's password and replace their session
+ */
+export const changePasswordBodyPasswordMin = 8;
+export const changePasswordBodyPasswordMax = 128;
+
+
+
+export const ChangePasswordBody = zod.object({
+  "password": zod.string().min(changePasswordBodyPasswordMin).max(changePasswordBodyPasswordMax)
+})
+
+export const ChangePasswordResponse = zod.object({
+  "user": zod.object({
+  "id": zod.number().int(),
+  "username": zod.string(),
+  "email": zod.string().email()
+}),
+  "token": zod.string().optional().describe('Opaque session token for native clients; web clients use the HttpOnly cookie.')
+})
+
+
+/**
+ * @summary Check whether password reset email delivery is configured
+ */
+export const GetPasswordResetConfigResponse = zod.object({
+  "enabled": zod.boolean()
+})
+
+
+/**
+ * @summary Request a password reset email
+ */
+export const requestPasswordResetBodyEmailMax = 254;
+
+
+
+export const RequestPasswordResetBody = zod.object({
+  "email": zod.string().email().max(requestPasswordResetBodyEmailMax)
+})
+
+export const RequestPasswordResetResponse = zod.object({
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Replace a password using a single-use reset token
+ */
+export const confirmPasswordResetBodyTokenMax = 256;
+
+export const confirmPasswordResetBodyPasswordMin = 8;
+export const confirmPasswordResetBodyPasswordMax = 128;
+
+
+
+export const ConfirmPasswordResetBody = zod.object({
+  "token": zod.string().min(1).max(confirmPasswordResetBodyTokenMax),
+  "password": zod.string().min(confirmPasswordResetBodyPasswordMin).max(confirmPasswordResetBodyPasswordMax)
+})
+
+export const ConfirmPasswordResetResponse = zod.void()
+
+
+/**
+ * @summary Export all data owned by the current athlete
+ */
+
+export const exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneSetsMax = 30;
+
+export const exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneRepsMax = 20;
+
+export const exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOnePercentageMax = 150;
+
+export const exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneWeightMin = 0;
+
+
+
+export const ExportAccountDataResponse = zod.object({
+  "exportedAt": zod.coerce.date(),
+  "account": zod.object({
+  "username": zod.string(),
+  "email": zod.string().email(),
+  "createdAt": zod.coerce.date()
+}),
+  "profile": zod.union([zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "snatchPb": zod.number(),
+  "cleanJerkPb": zod.number(),
+  "backSquatPb": zod.number(),
+  "frontSquatPb": zod.number(),
+  "roundingIncrement": zod.union([zod.literal(1),zod.literal(2),zod.literal(2.5)]),
+  "updatedAt": zod.string().nullable()
+}),zod.null()]),
+  "programmes": zod.array(zod.object({
+  "id": zod.number().int(),
+  "name": zod.string(),
+  "sessionsPerWeek": zod.number().int(),
+  "lengthWeeks": zod.number().int(),
+  "sessions": zod.array(zod.object({
+  "id": zod.number().int(),
+  "sessionNumber": zod.number().int(),
+  "name": zod.string(),
+  "exercises": zod.array(zod.object({
+  "movementId": zod.string().min(1),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
+  "sets": zod.number().int().min(1).max(exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneSetsMax),
+  "reps": zod.number().int().min(1).max(exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneRepsMax),
+  "percentage": zod.number().min(1).max(exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOnePercentageMax).optional(),
+  "weight": zod.number().min(exportAccountDataResponseProgrammesItemSessionsItemExercisesItemOneWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
+}).and(zod.object({
+  "id": zod.number().int(),
+  "order": zod.number().int()
+})))
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})),
+  "workouts": zod.array(zod.object({
+  "id": zod.number().int(),
+  "programmeId": zod.number().int(),
+  "programmeName": zod.string(),
+  "sessionNumber": zod.number().int(),
+  "sessionName": zod.string(),
+  "status": zod.enum(['in_progress', 'completed']),
+  "startedAt": zod.coerce.date(),
+  "completedAt": zod.coerce.date().nullish(),
+  "completedSets": zod.number().int(),
+  "missedSets": zod.number().int(),
+  "attempts": zod.number().int(),
+  "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
+  "id": zod.number().int(),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
+  "setNumber": zod.number().int(),
+  "totalSets": zod.number().int(),
+  "reps": zod.number().int(),
+  "percentage": zod.number().optional(),
+  "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
+  "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
+  "attemptNumber": zod.number().int(),
+  "completedAt": zod.coerce.date().nullish()
+}))
+})),
+  "customMovements": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "isCustom": zod.boolean(),
+  "userId": zod.string().nullable()
+}))
+})
+
+
+/**
+ * @summary Permanently delete the current athlete account and owned data
+ */
+export const deleteAccountBodyPasswordMax = 128;
+
+
+
+export const DeleteAccountBody = zod.object({
+  "password": zod.string().min(1).max(deleteAccountBodyPasswordMax),
+  "confirmation": zod.enum(['DELETE'])
+})
+
+export const DeleteAccountResponse = zod.void()
+
+
+/**
  * Returns server health status
  * @summary Health check
  */
@@ -91,11 +332,14 @@ export const createProgrammeBodyLengthWeeksMax = 52;
 
 
 
+
 export const createProgrammeBodySessionsItemExercisesItemSetsMax = 30;
 
 export const createProgrammeBodySessionsItemExercisesItemRepsMax = 20;
 
 export const createProgrammeBodySessionsItemExercisesItemPercentageMax = 150;
+
+export const createProgrammeBodySessionsItemExercisesItemWeightMin = 0;
 
 
 
@@ -109,19 +353,25 @@ export const CreateProgrammeBody = zod.object({
   "sessionNumber": zod.number().int().min(1),
   "name": zod.string().min(1),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1).optional(),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(createProgrammeBodySessionsItemExercisesItemSetsMax),
   "reps": zod.number().int().min(1).max(createProgrammeBodySessionsItemExercisesItemRepsMax),
-  "percentage": zod.number().min(1).max(createProgrammeBodySessionsItemExercisesItemPercentageMax)
+  "percentage": zod.number().min(1).max(createProgrammeBodySessionsItemExercisesItemPercentageMax).optional(),
+  "weight": zod.number().min(createProgrammeBodySessionsItemExercisesItemWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 })).min(1)
 })).min(1)
 })
+
 
 export const createProgrammeResponseSessionsItemExercisesItemOneSetsMax = 30;
 
 export const createProgrammeResponseSessionsItemExercisesItemOneRepsMax = 20;
 
 export const createProgrammeResponseSessionsItemExercisesItemOnePercentageMax = 150;
+
+export const createProgrammeResponseSessionsItemExercisesItemOneWeightMin = 0;
 
 
 
@@ -135,10 +385,13 @@ export const CreateProgrammeResponse = zod.object({
   "sessionNumber": zod.number().int(),
   "name": zod.string(),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(createProgrammeResponseSessionsItemExercisesItemOneSetsMax),
   "reps": zod.number().int().min(1).max(createProgrammeResponseSessionsItemExercisesItemOneRepsMax),
-  "percentage": zod.number().min(1).max(createProgrammeResponseSessionsItemExercisesItemOnePercentageMax)
+  "percentage": zod.number().min(1).max(createProgrammeResponseSessionsItemExercisesItemOnePercentageMax).optional(),
+  "weight": zod.number().min(createProgrammeResponseSessionsItemExercisesItemOneWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 }).and(zod.object({
   "id": zod.number().int(),
   "order": zod.number().int()
@@ -156,11 +409,14 @@ export const GetProgrammeParams = zod.object({
   "programmeId": zod.coerce.number().int()
 })
 
+
 export const getProgrammeResponseSessionsItemExercisesItemOneSetsMax = 30;
 
 export const getProgrammeResponseSessionsItemExercisesItemOneRepsMax = 20;
 
 export const getProgrammeResponseSessionsItemExercisesItemOnePercentageMax = 150;
+
+export const getProgrammeResponseSessionsItemExercisesItemOneWeightMin = 0;
 
 
 
@@ -174,10 +430,13 @@ export const GetProgrammeResponse = zod.object({
   "sessionNumber": zod.number().int(),
   "name": zod.string(),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(getProgrammeResponseSessionsItemExercisesItemOneSetsMax),
   "reps": zod.number().int().min(1).max(getProgrammeResponseSessionsItemExercisesItemOneRepsMax),
-  "percentage": zod.number().min(1).max(getProgrammeResponseSessionsItemExercisesItemOnePercentageMax)
+  "percentage": zod.number().min(1).max(getProgrammeResponseSessionsItemExercisesItemOnePercentageMax).optional(),
+  "weight": zod.number().min(getProgrammeResponseSessionsItemExercisesItemOneWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 }).and(zod.object({
   "id": zod.number().int(),
   "order": zod.number().int()
@@ -202,11 +461,14 @@ export const updateProgrammeBodyLengthWeeksMax = 52;
 
 
 
+
 export const updateProgrammeBodySessionsItemExercisesItemSetsMax = 30;
 
 export const updateProgrammeBodySessionsItemExercisesItemRepsMax = 20;
 
 export const updateProgrammeBodySessionsItemExercisesItemPercentageMax = 150;
+
+export const updateProgrammeBodySessionsItemExercisesItemWeightMin = 0;
 
 
 
@@ -220,19 +482,25 @@ export const UpdateProgrammeBody = zod.object({
   "sessionNumber": zod.number().int().min(1),
   "name": zod.string().min(1),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1).optional(),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(updateProgrammeBodySessionsItemExercisesItemSetsMax),
   "reps": zod.number().int().min(1).max(updateProgrammeBodySessionsItemExercisesItemRepsMax),
-  "percentage": zod.number().min(1).max(updateProgrammeBodySessionsItemExercisesItemPercentageMax)
+  "percentage": zod.number().min(1).max(updateProgrammeBodySessionsItemExercisesItemPercentageMax).optional(),
+  "weight": zod.number().min(updateProgrammeBodySessionsItemExercisesItemWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 })).min(1)
 })).min(1)
 })
+
 
 export const updateProgrammeResponseSessionsItemExercisesItemOneSetsMax = 30;
 
 export const updateProgrammeResponseSessionsItemExercisesItemOneRepsMax = 20;
 
 export const updateProgrammeResponseSessionsItemExercisesItemOnePercentageMax = 150;
+
+export const updateProgrammeResponseSessionsItemExercisesItemOneWeightMin = 0;
 
 
 
@@ -246,10 +514,13 @@ export const UpdateProgrammeResponse = zod.object({
   "sessionNumber": zod.number().int(),
   "name": zod.string(),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(updateProgrammeResponseSessionsItemExercisesItemOneSetsMax),
   "reps": zod.number().int().min(1).max(updateProgrammeResponseSessionsItemExercisesItemOneRepsMax),
-  "percentage": zod.number().min(1).max(updateProgrammeResponseSessionsItemExercisesItemOnePercentageMax)
+  "percentage": zod.number().min(1).max(updateProgrammeResponseSessionsItemExercisesItemOnePercentageMax).optional(),
+  "weight": zod.number().min(updateProgrammeResponseSessionsItemExercisesItemOneWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 }).and(zod.object({
   "id": zod.number().int(),
   "order": zod.number().int()
@@ -271,13 +542,57 @@ export const DeleteProgrammeResponse = zod.void()
 
 
 /**
+ * @summary List standard and user-created movements
+ */
+export const GetMovementsResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "isCustom": zod.boolean(),
+  "userId": zod.string().nullable()
+})
+export const GetMovementsResponse = zod.array(GetMovementsResponseItem)
+
+
+/**
+ * @summary Add a user-created movement
+ */
+export const createMovementBodyNameMax = 80;
+
+export const createMovementBodyCategoryMax = 40;
+
+export const createMovementBodyDescriptionMax = 240;
+
+
+
+export const CreateMovementBody = zod.object({
+  "name": zod.string().min(1).max(createMovementBodyNameMax),
+  "category": zod.string().min(1).max(createMovementBodyCategoryMax),
+  "description": zod.string().max(createMovementBodyDescriptionMax).optional()
+})
+
+export const CreateMovementResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "category": zod.string(),
+  "description": zod.string().nullish(),
+  "isCustom": zod.boolean(),
+  "userId": zod.string().nullable()
+})
+
+
+/**
  * @summary Get the next planned session and recent training summary
  */
+
 export const getDashboardResponseNextSessionOneExercisesItemOneSetsMax = 30;
 
 export const getDashboardResponseNextSessionOneExercisesItemOneRepsMax = 20;
 
 export const getDashboardResponseNextSessionOneExercisesItemOnePercentageMax = 150;
+
+export const getDashboardResponseNextSessionOneExercisesItemOneWeightMin = 0;
 
 
 
@@ -305,10 +620,13 @@ export const GetDashboardResponse = zod.object({
   "sessionNumber": zod.number().int(),
   "name": zod.string(),
   "exercises": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "movementId": zod.string().min(1),
+  "exercise": zod.string().optional().describe('Legacy movement identifier retained for workout compatibility'),
   "sets": zod.number().int().min(1).max(getDashboardResponseNextSessionOneExercisesItemOneSetsMax),
   "reps": zod.number().int().min(1).max(getDashboardResponseNextSessionOneExercisesItemOneRepsMax),
-  "percentage": zod.number().min(1).max(getDashboardResponseNextSessionOneExercisesItemOnePercentageMax)
+  "percentage": zod.number().min(1).max(getDashboardResponseNextSessionOneExercisesItemOnePercentageMax).optional(),
+  "weight": zod.number().min(getDashboardResponseNextSessionOneExercisesItemOneWeightMin).optional().describe('Direct working weight for an accessory movement'),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
 }).and(zod.object({
   "id": zod.number().int(),
   "order": zod.number().int()
@@ -325,7 +643,7 @@ export const GetDashboardResponse = zod.object({
   "attempts": zod.number().int(),
   "hasPb": zod.boolean(),
   "pbSets": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "weight": zod.number()
 }))
 })),
@@ -347,7 +665,7 @@ export const GetHistoryResponseItem = zod.object({
   "attempts": zod.number().int(),
   "hasPb": zod.boolean(),
   "pbSets": zod.array(zod.object({
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "weight": zod.number()
 }))
 })
@@ -378,13 +696,15 @@ export const StartWorkoutResponse = zod.object({
   "missedSets": zod.number().int(),
   "attempts": zod.number().int(),
   "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
   "id": zod.number().int(),
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "setNumber": zod.number().int(),
   "totalSets": zod.number().int(),
   "reps": zod.number().int(),
-  "percentage": zod.number(),
+  "percentage": zod.number().optional(),
   "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
   "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
   "attemptNumber": zod.number().int(),
   "completedAt": zod.coerce.date().nullish()
@@ -412,13 +732,61 @@ export const GetWorkoutResponse = zod.object({
   "missedSets": zod.number().int(),
   "attempts": zod.number().int(),
   "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
   "id": zod.number().int(),
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "setNumber": zod.number().int(),
   "totalSets": zod.number().int(),
   "reps": zod.number().int(),
-  "percentage": zod.number(),
+  "percentage": zod.number().optional(),
   "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
+  "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
+  "attemptNumber": zod.number().int(),
+  "completedAt": zod.coerce.date().nullish()
+}))
+})
+
+
+/**
+ * @summary Save the load for a workout set
+ */
+export const UpdateWorkoutSetParams = zod.object({
+  "workoutId": zod.coerce.number().int(),
+  "setId": zod.coerce.number().int()
+})
+
+export const updateWorkoutSetBodyWeightExclusiveMin = 0;
+
+
+
+export const UpdateWorkoutSetBody = zod.object({
+  "weight": zod.number().gt(updateWorkoutSetBodyWeightExclusiveMin),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional()
+}).describe('The load and optional accessory equipment to save for this set and carry into later pending sets of the same movement.')
+
+export const UpdateWorkoutSetResponse = zod.object({
+  "id": zod.number().int(),
+  "programmeId": zod.number().int(),
+  "programmeName": zod.string(),
+  "sessionNumber": zod.number().int(),
+  "sessionName": zod.string(),
+  "status": zod.enum(['in_progress', 'completed']),
+  "startedAt": zod.coerce.date(),
+  "completedAt": zod.coerce.date().nullish(),
+  "completedSets": zod.number().int(),
+  "missedSets": zod.number().int(),
+  "attempts": zod.number().int(),
+  "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
+  "id": zod.number().int(),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
+  "setNumber": zod.number().int(),
+  "totalSets": zod.number().int(),
+  "reps": zod.number().int(),
+  "percentage": zod.number().optional(),
+  "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
   "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
   "attemptNumber": zod.number().int(),
   "completedAt": zod.coerce.date().nullish()
@@ -455,13 +823,15 @@ export const CompleteSetResponse = zod.object({
   "missedSets": zod.number().int(),
   "attempts": zod.number().int(),
   "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
   "id": zod.number().int(),
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "setNumber": zod.number().int(),
   "totalSets": zod.number().int(),
   "reps": zod.number().int(),
-  "percentage": zod.number(),
+  "percentage": zod.number().optional(),
   "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
   "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
   "attemptNumber": zod.number().int(),
   "completedAt": zod.coerce.date().nullish()
@@ -494,13 +864,15 @@ export const MissSetResponse = zod.object({
   "missedSets": zod.number().int(),
   "attempts": zod.number().int(),
   "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
   "id": zod.number().int(),
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "setNumber": zod.number().int(),
   "totalSets": zod.number().int(),
   "reps": zod.number().int(),
-  "percentage": zod.number(),
+  "percentage": zod.number().optional(),
   "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
   "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
   "attemptNumber": zod.number().int(),
   "completedAt": zod.coerce.date().nullish()
@@ -528,13 +900,15 @@ export const FinishWorkoutResponse = zod.object({
   "missedSets": zod.number().int(),
   "attempts": zod.number().int(),
   "sets": zod.array(zod.object({
+  "movementId": zod.string().optional(),
   "id": zod.number().int(),
-  "exercise": zod.enum(['snatch', 'clean_and_jerk', 'back_squat', 'front_squat']),
+  "exercise": zod.string().describe('Legacy movement identifier retained for workout compatibility'),
   "setNumber": zod.number().int(),
   "totalSets": zod.number().int(),
   "reps": zod.number().int(),
-  "percentage": zod.number(),
+  "percentage": zod.number().optional(),
   "weight": zod.number(),
+  "equipment": zod.enum(['kettlebell', 'bands', 'barbell', 'dumbbell']).optional(),
   "status": zod.enum(['pending', 'completed', 'missed', 'skipped']),
   "attemptNumber": zod.number().int(),
   "completedAt": zod.coerce.date().nullish()

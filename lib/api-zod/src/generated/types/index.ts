@@ -6,16 +6,33 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './accessoryEquipment';
+export * from './accountDataExport';
+export * from './accountDeletionInput';
+export * from './accountDeletionInputConfirmation';
+export * from './apiError';
+export * from './apiErrorResponse';
 export * from './athleteProfile';
 export * from './athleteProfileInput';
 export * from './athleteProfileInputRoundingIncrement';
 export * from './athleteProfileRoundingIncrement';
+export * from './authSession';
+export * from './authUser';
 export * from './completeSetInput';
 export * from './dashboard';
 export * from './exerciseName';
+export * from './exportedAccount';
 export * from './healthStatus';
+export * from './loginInput';
 export * from './missSetInput';
 export * from './missSetInputAction';
+export * from './movement';
+export * from './movementInput';
+export * from './passwordChangeInput';
+export * from './passwordResetConfig';
+export * from './passwordResetConfirmationInput';
+export * from './passwordResetRequestInput';
+export * from './passwordResetRequestResult';
 export * from './pbSet';
 export * from './programme';
 export * from './programmeExercise';
@@ -24,9 +41,11 @@ export * from './programmeInput';
 export * from './programmeSession';
 export * from './programmeSessionInput';
 export * from './programmeSummary';
+export * from './signupInput';
 export * from './startWorkoutInput';
 export * from './workout';
 export * from './workoutSet';
 export * from './workoutSetStatus';
+export * from './workoutSetUpdate';
 export * from './workoutStatus';
 export * from './workoutSummary';

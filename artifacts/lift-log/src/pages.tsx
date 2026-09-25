@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, BatteryFull, Check, ChevronDown, ChevronRight, ChevronUp, CircleAlert, Edit3, Plus, Save, Signal, Trash2, Trophy, Wifi, X } from 'lucide-react';
+import { ArrowRight, BatteryFull, Check, ChevronDown, ChevronRight, ChevronUp, CircleAlert, Edit3, Plus, Save, Search, Signal, Trash2, Trophy, Wifi, X } from 'lucide-react';
 import {
-  getGetDashboardQueryKey, getGetHistoryQueryKey, getGetProgrammeQueryKey,
+  getGetDashboardQueryKey, getGetHistoryQueryKey, getGetMovementsQueryKey, getGetProgrammeQueryKey,
   getGetProgrammesQueryKey, getGetProfileQueryKey, getGetWorkoutQueryKey,
   useCompleteSet, useCreateProgramme, useDeleteProgramme, useFinishWorkout,
-  useGetDashboard, useGetHistory, useGetProgramme, useGetProgrammes,
-  useGetProfile, useGetWorkout, useMissSet, useSaveProfile,
-  useStartWorkout, useUpdateProgramme,
+  useGetDashboard, useGetHistory, useGetMovements, useGetProgramme, useGetProgrammes,
+  useGetProfile, useGetWorkout, useMissSet, useSaveProfile, useUpdateWorkoutSet,
+  useStartWorkout, useUpdateProgramme, useCreateMovement,
 } from '@workspace/api-client-react';
-import type { AthleteProfileInput, ExerciseName, ProgrammeInput } from '@workspace/api-client-react';
+import type { AccessoryEquipment, AthleteProfileInput, ExerciseName, Movement, ProgrammeInput } from '@workspace/api-client-react';
 import { emptyProgramme, exerciseLabels, formatDate, formatShortDate } from '@/lib/utils';
+import { ACCESSORY_EQUIPMENT_OPTIONS, COMMON_MOVEMENT_IDS, MOVEMENT_CATEGORIES, STANDARD_MOVEMENTS, accessoryEquipmentLabel, movementLabel } from '@/lib/movements';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '@/components/shell';
 import { Button } from '@/components/button';
 import { Input, Select } from '@/components/input';
@@ -19,8 +20,6 @@ import { BottomSheet } from '@/components/sheet';
 import { WorkoutCurrentSet, ExerciseCompleteBanner, SetStatusBar } from '@/components/workout';
 import type { WorkoutSetStatus } from '@/components/workout';
 import { MobilePageHeader, MobileStatusBar } from '@/components/mobile-chrome';
-
-const exerciseOptions: ExerciseName[] = ['snatch', 'clean_and_jerk', 'back_squat', 'front_squat'];
 
 function PageHead({ eyebrow, title, detail }: { eyebrow: string; title: string; detail?: string }) {
   return (
@@ -31,6 +30,12 @@ function PageHead({ eyebrow, title, detail }: { eyebrow: string; title: string; 
     </div>
   );
 }
+
+type CustomMovementDraft = {
+  name: string;
+  category: typeof MOVEMENT_CATEGORIES[number];
+  description: string;
+};
 
 function StatsRow({ stats }: { stats: { label: string; value: string; accent?: boolean }[] }) {
   return (
@@ -55,6 +60,8 @@ export function DashboardPage() {
   if (query.isLoading) return <LoadingBlock />;
   if (query.isError || !query.data) return <ErrorBlock retry={() => query.refetch()} />;
   const d = query.data;
+  const sessionsThisWeek = d.recentWorkouts.filter((workout) => workout.completedSets > 0).length;
+  const nextSessionSets = d.nextSession?.exercises.reduce((total, exercise) => total + exercise.sets, 0) ?? 0;
   return (
     <div className="animate-in fade-in duration-500">
       <div className="flex h-11 items-center justify-between px-6">
@@ -76,33 +83,46 @@ export function DashboardPage() {
           <h1 className="font-display text-[44px] font-semibold uppercase leading-[50px] tracking-[.0125em]">Ready when<br />you are.</h1>
         </div>
 
-        <section className="relative flex min-h-[184px] flex-col gap-6 overflow-hidden rounded-2xl bg-card p-6">
-          <div className="absolute -right-1 -top-1 font-display text-[84px] font-semibold leading-[92px] tracking-[.03em] text-muted-foreground opacity-30">01</div>
-          <div className="relative flex flex-col gap-1">
-            <p className="font-display text-[11px] font-semibold uppercase leading-[14px] tracking-[.015em] text-secondary">Week 1 Session 1</p>
-            <h2 className="font-display text-[24px] font-semibold uppercase leading-[26px] tracking-[-.02em]">Snatch &amp; Front Squats</h2>
-            <p className="font-data text-[13px] leading-normal text-muted-foreground">5 movements · 16 working sets</p>
-          </div>
-          <Button
-            variant="primary"
-            className="h-12 w-[217px] rounded-xl px-0 type-button uppercase"
-            onClick={() => d.programme && d.nextSession && setLocation(`/workout/start?programme=${d.programme.id}&session=${d.nextSession.sessionNumber}`)}
-            data-testid="button-start-next"
-          >
-            Start session
-          </Button>
-        </section>
+        {d.programme && d.nextSession ? (
+          <section className="relative flex min-h-[184px] flex-col gap-6 overflow-hidden rounded-2xl bg-card p-6">
+            <div className="absolute -right-1 -top-1 font-display text-[84px] font-semibold leading-[92px] tracking-[.03em] text-muted-foreground opacity-30">{String(d.nextSession.sessionNumber).padStart(2, '0')}</div>
+            <div className="relative flex flex-col gap-1">
+              <p className="font-display text-[11px] font-semibold uppercase leading-[14px] tracking-[.015em] text-secondary">Next session · {d.programme.name}</p>
+              <h2 className="font-display text-[24px] font-semibold uppercase leading-[26px] tracking-[-.02em]">{d.nextSession.name}</h2>
+              <p className="font-data text-[13px] leading-normal text-muted-foreground">{d.nextSession.exercises.length} movements · {nextSessionSets} working sets</p>
+            </div>
+            <Button
+              variant="primary"
+              className="h-12 w-[217px] rounded-xl px-0 type-button uppercase"
+              onClick={() => setLocation(`/workout/start?programme=${d.programme!.id}&session=${d.nextSession!.sessionNumber}`)}
+              data-testid="button-start-next"
+            >
+              Start session
+            </Button>
+          </section>
+        ) : (
+          <section className="flex min-h-[184px] flex-col justify-center gap-4 rounded-2xl bg-card p-6">
+            <div>
+              <p className="font-display text-[11px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">No active programme</p>
+              <h2 className="mt-1 font-display text-[24px] font-semibold uppercase leading-[26px] tracking-[-.02em]">Ready when you are.</h2>
+              <p className="mt-1 font-data text-[13px] leading-normal text-muted-foreground">Create a programme to plan your next session.</p>
+            </div>
+            <Button variant="tertiary" className="h-12 w-[217px] rounded-xl border-primary px-0 text-primary type-button uppercase" onClick={() => setLocation('/programme')} data-testid="button-create-first-programme">
+              Create programme
+            </Button>
+          </section>
+        )}
 
         <section className="flex flex-col gap-3.5">
           <h2 className="font-display text-2xl font-semibold uppercase leading-[26px] tracking-[-.02em]">Weekly statistics</h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex min-h-[66px] flex-col gap-1 rounded-xl bg-card p-4">
-              <p className="font-display text-[22px] font-bold leading-normal">4/5</p>
+              <p className="font-display text-[22px] font-bold leading-normal">{sessionsThisWeek}/{d.programme?.sessionsPerWeek ?? 0}</p>
               <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Sessions</p>
             </div>
             <div className="flex min-h-[66px] flex-col gap-1 rounded-xl bg-card p-4">
-              <p className="font-display text-[22px] font-bold leading-normal">64</p>
-              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Reps</p>
+              <p className="font-display text-[22px] font-bold leading-normal">{d.weeklyCompletedSets}</p>
+              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Sets</p>
             </div>
           </div>
         </section>
@@ -113,35 +133,37 @@ export function DashboardPage() {
             <Link href="/history" className="font-display text-sm font-semibold text-primary" data-testid="link-see-history">See all</Link>
           </div>
           <div className="flex flex-col gap-3">
-            <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl bg-card p-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">Yesterday</p>
-                <p className="truncate font-display text-[15px] font-semibold leading-5">Clean &amp; Jerk Heavy Singles</p>
-                <p className="font-data text-[13px] leading-normal text-muted-foreground">12 working sets</p>
+            {d.recentWorkouts.length > 0 ? d.recentWorkouts.map((workout) => (
+              <Link key={workout.id} href={`/workout/${workout.id}`} className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl bg-card p-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">{formatShortDate(workout.date)}</p>
+                  <p className="truncate font-display text-[15px] font-semibold leading-5">{workout.sessionName}</p>
+                  <p className="font-data text-[13px] leading-normal text-muted-foreground">{workout.totalSets} working sets</p>
+                </div>
+                <span className={`rounded-md px-2 py-1 font-display text-[11px] font-semibold ${workout.missedSets > 0 ? 'bg-destructive/15 text-destructive' : workout.completedSets === workout.totalSets ? 'bg-success/15 text-success' : 'bg-secondary/15 text-secondary'}`}>
+                  {workout.missedSets > 0 ? `${workout.missedSets} missed` : workout.completedSets === workout.totalSets ? 'Complete' : 'In progress'}
+                </span>
+              </Link>
+            )) : (
+              <div className="rounded-xl bg-card p-4">
+                <p className="font-data text-[13px] leading-normal text-muted-foreground">No sessions recorded yet.</p>
               </div>
-              <span className="rounded-md bg-success/15 px-2 py-1 font-display text-[11px] font-semibold text-success">Complete</span>
-            </div>
-            <div className="flex min-h-[76px] items-center justify-between gap-3 rounded-xl bg-card p-4">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-muted-foreground">08 Aug</p>
-                <p className="truncate font-display text-[15px] font-semibold leading-5">Power Snatch</p>
-                <p className="font-data text-[13px] leading-normal text-muted-foreground">10 working sets</p>
-              </div>
-              <span className="rounded-md bg-success/15 px-2 py-1 font-display text-[11px] font-semibold text-success">Complete</span>
-            </div>
+            )}
           </div>
         </section>
 
-        <section className="flex flex-col gap-3.5">
-          <Link href="/programme" className="flex items-center gap-3 rounded-2xl bg-card p-6">
+        {d.programme && (
+          <section className="flex flex-col gap-3.5">
+            <Link href="/programme" className="flex items-center gap-3 rounded-2xl bg-card p-6">
             <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-primary">4 sessions / week · 12 weeks</p>
-              <p className="font-display text-2xl font-semibold leading-[26px] tracking-[-.02em]">Solitude Strength<br />v2</p>
-              <p className="font-data line-clamp-2 text-[15px] leading-5 text-muted-foreground">Squat Intensity, Snatch Speed, Pull Complex, Leg Volume</p>
+              <p className="font-display text-[10px] font-semibold uppercase leading-[14px] tracking-[.015em] text-primary">{d.programme.sessionsPerWeek} sessions / week · {d.programme.lengthWeeks} weeks</p>
+              <p className="font-display text-2xl font-semibold leading-[26px] tracking-[-.02em]">{d.programme.name}</p>
+              <p className="font-data line-clamp-2 text-[15px] leading-5 text-muted-foreground">{d.programme.sessionNames.join(', ')}</p>
             </div>
             <ArrowRight size={22} className="shrink-0 text-muted-foreground" />
-          </Link>
-        </section>
+            </Link>
+          </section>
+        )}
       </div>
     </div>
   );
@@ -284,14 +306,87 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
   const [form, setForm] = useState<ProgrammeInput>(initial || emptyProgramme);
   const create = useCreateProgramme();
   const update = useUpdateProgramme();
+  const movementQuery = useGetMovements();
+  const createMovement = useCreateMovement();
   const qc = useQueryClient();
   const mutation = programmeId ? update : create;
+  const [addingToSession, setAddingToSession] = useState<number | null>(null);
+  const [movementTarget, setMovementTarget] = useState<{ sessionIndex: number; exerciseIndex: number } | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryCategory, setLibraryCategory] = useState('All');
+  const [customFormOpen, setCustomFormOpen] = useState(false);
+  const [customMovement, setCustomMovement] = useState<CustomMovementDraft>({ name: '', category: MOVEMENT_CATEGORIES[0], description: '' });
+  const [createdMovements, setCreatedMovements] = useState<Movement[]>([]);
 
   const setSession = (index: number, patch: Partial<ProgrammeInput['sessions'][number]>) =>
     setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === index ? { ...s, ...patch } : s) }));
 
   const setExercise = (si: number, ei: number, patch: Partial<ProgrammeInput['sessions'][number]['exercises'][number]>) =>
     setForm((f) => ({ ...f, sessions: f.sessions.map((s, i) => i === si ? { ...s, exercises: s.exercises.map((e, j) => j === ei ? { ...e, ...patch } : e) } : s) }));
+
+  const serverLibrary = movementQuery.data?.length
+    ? movementQuery.data
+    : STANDARD_MOVEMENTS.map((movement) => ({ ...movement, description: null, isCustom: false, userId: null }));
+  const library = [
+    ...serverLibrary,
+    ...createdMovements.filter((created) => !serverLibrary.some((movement) => movement.id === created.id)),
+  ];
+  const movementName = (id?: string) => library.find((movement) => movement.id === id)?.name ?? movementLabel(id ?? 'snatch');
+  const commonMovements = COMMON_MOVEMENT_IDS.map((id) => library.find((movement) => movement.id === id) ?? STANDARD_MOVEMENTS.find((movement) => movement.id === id)).filter((movement): movement is Movement | (typeof STANDARD_MOVEMENTS)[number] => Boolean(movement));
+  const filteredMovements = library.filter((movement) => {
+    const matchesSearch = movement.name.toLowerCase().includes(librarySearch.toLowerCase().trim());
+    return matchesSearch && (libraryCategory === 'All' || movement.category === libraryCategory);
+  });
+
+  const chooseMovement = (movement: Movement | { id: string; category?: string }) => {
+    const isAccessory = movement.category === 'Accessories' || library.find((item) => item.id === movement.id)?.category === 'Accessories';
+    if (movementTarget) {
+      const current = form.sessions[movementTarget.sessionIndex].exercises[movementTarget.exerciseIndex];
+      setExercise(
+        movementTarget.sessionIndex,
+        movementTarget.exerciseIndex,
+        isAccessory
+          ? { movementId: movement.id, percentage: undefined, weight: current.weight ?? 0, equipment: current.equipment ?? 'barbell' }
+          : { movementId: movement.id, percentage: current.percentage ?? 70, weight: undefined, equipment: undefined },
+      );
+    } else if (addingToSession !== null) {
+      const session = form.sessions[addingToSession];
+      setSession(addingToSession, {
+        exercises: [
+          ...session.exercises,
+          isAccessory
+            ? { movementId: movement.id, sets: 3, reps: 8, weight: 0, equipment: 'barbell' }
+            : { movementId: movement.id, sets: 3, reps: 2, percentage: 70 },
+        ],
+      });
+    }
+    setMovementTarget(null);
+    setAddingToSession(null);
+    setLibraryOpen(false);
+    setCustomFormOpen(false);
+  };
+
+  const submitCustomMovement = () => {
+    const name = customMovement.name.trim();
+    if (!name) return;
+    createMovement.mutate(
+      { data: { name, category: customMovement.category, description: customMovement.description.trim() || undefined } },
+      {
+        onSuccess: (movement) => {
+          setCreatedMovements((current) =>
+            current.some((existing) => existing.id === movement.id) ? current : [...current, movement],
+          );
+          qc.setQueryData<Movement[]>(getGetMovementsQueryKey(), (current = []) =>
+            current.some((existing) => existing.id === movement.id) ? current : [...current, movement],
+          );
+          qc.invalidateQueries({ queryKey: getGetMovementsQueryKey() });
+          chooseMovement(movement);
+          setCustomMovement({ name: '', category: MOVEMENT_CATEGORIES[0], description: '' });
+        },
+      },
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -300,6 +395,12 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
       sessions: form.sessions.map((session, index) => ({
         ...session,
         sessionNumber: index + 1,
+        exercises: session.exercises.map((exercise) => {
+          const isAccessory = library.find((movement) => movement.id === (exercise.movementId ?? exercise.exercise))?.category === 'Accessories';
+          return isAccessory
+            ? { ...exercise, percentage: undefined, weight: exercise.weight ?? 0, equipment: exercise.equipment ?? 'barbell' }
+            : { ...exercise, percentage: exercise.percentage ?? 70, weight: undefined, equipment: undefined };
+        }),
       })),
     };
     const done = () => {
@@ -356,14 +457,23 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
           </div>
 
           <div className="space-y-3">
-            {session.exercises.map((ex, ei) => (
+             {session.exercises.map((ex, ei) => {
+              const isAccessory = library.find((movement) => movement.id === (ex.movementId ?? ex.exercise))?.category === 'Accessories';
+              return (
               <div key={ei} className="rounded-lg border border-border bg-card/50 p-3">
-                <Select
-                  label="Movement"
-                  value={ex.exercise}
-                  onChange={(e) => setExercise(si, ei, { exercise: e.target.value as ExerciseName })}
-                  options={exerciseOptions.map((x) => ({ value: x, label: exerciseLabels[x] }))}
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="type-caption text-muted-foreground">Movement</p>
+                    <p className="mt-1 truncate font-display text-lg font-semibold uppercase">{movementName(ex.movementId ?? ex.exercise)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setMovementTarget({ sessionIndex: si, exerciseIndex: ei }); setLibraryOpen(true); }}
+                    className="tap shrink-0 rounded-md border border-border px-2 py-1 font-display text-[10px] font-semibold uppercase text-muted-foreground hover:border-primary hover:text-primary"
+                  >
+                    Change
+                  </button>
+                </div>
                 <div className="mt-3 grid grid-cols-[1fr_1fr_1fr_38px] items-end gap-2">
                   <Input
                     label="Sets"
@@ -378,10 +488,13 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
                     onChange={(e) => setExercise(si, ei, { reps: Number(e.target.value) })}
                   />
                   <Input
-                    label="% 1RM"
-                    type="number" min="1"
-                    value={ex.percentage}
-                    onChange={(e) => setExercise(si, ei, { percentage: Number(e.target.value) })}
+                     label={isAccessory ? 'Weight (kg)' : '% 1RM'}
+                     type="number"
+                     min={isAccessory ? 0 : 1}
+                     step={isAccessory ? 0.5 : 1}
+                     value={isAccessory ? ex.weight ?? 0 : ex.percentage ?? 70}
+                     onChange={(e) => setExercise(si, ei, isAccessory ? { weight: Number(e.target.value) } : { percentage: Number(e.target.value) })}
+                     data-testid={isAccessory ? `input-accessory-weight-${si}-${ei}` : `input-percentage-${si}-${ei}`}
                   />
                   <button
                     type="button"
@@ -392,18 +505,50 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
                     <Trash2 size={16} />
                   </button>
                 </div>
+                 {isAccessory && (
+                   <div className="mt-3">
+                     <Select
+                       label="Equipment"
+                       value={ex.equipment ?? 'barbell'}
+                       onChange={(event) => setExercise(si, ei, { equipment: event.target.value as AccessoryEquipment })}
+                       options={ACCESSORY_EQUIPMENT_OPTIONS.map((option) => ({ ...option }))}
+                       data-testid={`select-accessory-equipment-${si}-${ei}`}
+                     />
+                   </div>
+                 )}
               </div>
-            ))}
+              );
+             })}
           </div>
 
           <button
             type="button"
-            onClick={() => setSession(si, { exercises: [...session.exercises, { exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] })}
+            onClick={() => { setMovementTarget(null); setAddingToSession(si); }}
             className="mt-4 flex items-center gap-2 type-caption font-semibold text-primary"
             data-testid={`button-add-exercise-${si}`}
           >
             <Plus size={14} /> Add movement
           </button>
+          {addingToSession === si && (
+            <div className="mt-4 rounded-lg border border-primary/30 bg-background p-3">
+              <p className="mb-2 type-caption text-primary">Add movement</p>
+              <div className="grid grid-cols-2 gap-2">
+                {commonMovements.map((movement) => (
+                  <button
+                    key={movement.id}
+                    type="button"
+                    onClick={() => chooseMovement(movement)}
+                    className="tap min-h-10 rounded-md border border-border px-3 text-left font-display text-xs font-semibold uppercase hover:border-primary hover:text-primary"
+                  >
+                    {movement.name}
+                  </button>
+                ))}
+              </div>
+              <Button type="button" variant="tertiary" className="mt-3 w-full text-xs uppercase" onClick={() => setLibraryOpen(true)}>
+                Explore movement library
+              </Button>
+            </div>
+          )}
         </div>
       ))}
 
@@ -411,7 +556,7 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
         <Button
           type="button"
           variant="tertiary"
-          onClick={() => setForm((f) => ({ ...f, sessions: [...f.sessions, { sessionNumber: f.sessions.length + 1, name: `Session ${f.sessions.length + 1}`, exercises: [{ exercise: 'snatch', sets: 3, reps: 2, percentage: 70 }] }] }))}
+          onClick={() => setForm((f) => ({ ...f, sessions: [...f.sessions, { sessionNumber: f.sessions.length + 1, name: `Session ${f.sessions.length + 1}`, exercises: [{ movementId: 'snatch', sets: 3, reps: 2, percentage: 70 }] }] }))}
           data-testid="button-add-session"
         >
           <Plus size={16} /> Add session
@@ -425,6 +570,55 @@ export function ProgrammeForm({ initial, programmeId, onDone }: { initial?: Prog
           <Save size={16} /> Save programme
         </Button>
       </div>
+
+      <BottomSheet
+        open={libraryOpen}
+        onClose={() => { setLibraryOpen(false); setCustomFormOpen(false); }}
+        title={customFormOpen ? 'Add new movement' : 'Movement library'}
+        subtitle={customFormOpen ? 'Create a private movement for your library.' : 'Search the full Lofte movement library.'}
+        className="max-h-[85vh] overflow-y-auto"
+      >
+        {customFormOpen ? (
+          <div className="space-y-4">
+            <Input label="Movement name" value={customMovement.name} onChange={(event) => setCustomMovement((current) => ({ ...current, name: event.target.value }))} placeholder="Enter movement name" required />
+            <Select label="Category" value={customMovement.category} onChange={(event) => setCustomMovement((current) => ({ ...current, category: event.target.value as typeof MOVEMENT_CATEGORIES[number] }))} options={MOVEMENT_CATEGORIES.map((category) => ({ value: category, label: category }))} />
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-muted-foreground">Description <span className="font-normal">(optional)</span></span>
+              <textarea value={customMovement.description} onChange={(event) => setCustomMovement((current) => ({ ...current, description: event.target.value }))} className="min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary" placeholder="Add description" maxLength={240} />
+            </label>
+            <div className="flex gap-3">
+              <Button type="button" variant="tertiary" className="flex-1" onClick={() => setCustomFormOpen(false)}>Back</Button>
+              <Button type="button" variant="primary" className="flex-1" loading={createMovement.isPending} onClick={submitCustomMovement}>Add movement</Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-3 text-muted-foreground" />
+              <Input aria-label="Search movements" value={librarySearch} onChange={(event) => setLibrarySearch(event.target.value)} placeholder="Search movements" className="pl-9" />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {['All', ...MOVEMENT_CATEGORIES].map((category) => (
+                <button key={category} type="button" onClick={() => setLibraryCategory(category)} className={`tap shrink-0 rounded-full border px-3 py-1.5 font-display text-[10px] font-semibold uppercase ${libraryCategory === category ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground'}`}>
+                  {category}
+                </button>
+              ))}
+            </div>
+            <div className="grid max-h-[42vh] gap-1 overflow-y-auto">
+              {filteredMovements.map((movement) => (
+                <button key={movement.id} type="button" onClick={() => chooseMovement(movement)} className="tap flex items-center justify-between rounded-lg px-3 py-3 text-left hover:bg-elevated">
+                  <span className="font-display text-sm font-semibold uppercase">{movement.name}</span>
+                  <span className="font-data text-[10px] uppercase text-muted-foreground">{movement.category}</span>
+                </button>
+              ))}
+              {filteredMovements.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No movements found.</p>}
+            </div>
+            <Button type="button" variant="tertiary" className="w-full uppercase" onClick={() => setCustomFormOpen(true)}>
+              <Plus size={16} /> Add new movement
+            </Button>
+          </div>
+        )}
+      </BottomSheet>
     </form>
   );
 }
@@ -549,6 +743,7 @@ export function ProgrammeDetailPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const q = useGetProgramme(id, { query: { queryKey: getGetProgrammeQueryKey(id), enabled: Number.isFinite(id) } });
+  const movementsQuery = useGetMovements();
   const [editing, setEditing] = useState(false);
   const [, setLocation] = useLocation();
   const start = useStartWorkout();
@@ -557,6 +752,10 @@ export function ProgrammeDetailPage() {
   if (q.isLoading) return <LoadingBlock />;
   if (q.isError || !q.data) return <ErrorBlock retry={() => q.refetch()} />;
   const p = q.data;
+  const displayMovement = (id: string) =>
+    movementsQuery.data?.find((movement) => movement.id === id)?.name ??
+    exerciseLabels[id] ??
+    movementLabel(id);
 
   return (
     <div>
@@ -577,7 +776,7 @@ export function ProgrammeDetailPage() {
       {editing ? (
         <section className="rounded-xl border border-border bg-card p-5">
           <ProgrammeForm
-            initial={{ name: p.name, sessionsPerWeek: p.sessionsPerWeek, lengthWeeks: p.lengthWeeks, sessions: p.sessions.map((s) => ({ sessionNumber: s.sessionNumber, name: s.name, exercises: s.exercises.map((e) => ({ exercise: e.exercise, sets: e.sets, reps: e.reps, percentage: e.percentage })) })) }}
+            initial={{ name: p.name, sessionsPerWeek: p.sessionsPerWeek, lengthWeeks: p.lengthWeeks, sessions: p.sessions.map((s) => ({ sessionNumber: s.sessionNumber, name: s.name, exercises: s.exercises.map((e) => ({ movementId: e.movementId ?? e.exercise ?? 'snatch', sets: e.sets, reps: e.reps, percentage: e.percentage, weight: e.weight, equipment: e.equipment })) })) }}
             programmeId={p.id}
             onDone={() => setEditing(false)}
           />
@@ -618,10 +817,12 @@ export function ProgrammeDetailPage() {
                   {s.exercises.map((e) => (
                     <div key={e.id} className="flex items-center justify-between py-4">
                       <div>
-                        <p className="type-subheading">{exerciseLabels[e.exercise]}</p>
+                        <p className="type-subheading">{displayMovement(e.movementId ?? e.exercise ?? 'snatch')}</p>
                         <p className="type-body-sm text-muted-foreground">{e.sets} sets × {e.reps} reps</p>
                       </div>
-                      <span className="font-data type-body-sm text-primary">{e.percentage}%</span>
+                      <span className="font-data type-body-sm text-primary">
+                        {e.weight != null ? `${e.weight} kg · ${accessoryEquipmentLabel(e.equipment)}` : `${e.percentage}%`}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -642,22 +843,25 @@ export function WorkoutPage() {
   const params = useParams<{ id: string }>();
   const id = Number(params.id);
   const q = useGetWorkout(id, { query: { queryKey: getGetWorkoutQueryKey(id), enabled: Number.isFinite(id) } });
+  const movementsQuery = useGetMovements();
   const [, setLocation] = useLocation();
   const qc = useQueryClient();
   const complete = useCompleteSet();
   const miss = useMissSet();
   const finish = useFinishWorkout();
+  const updateWorkoutSet = useUpdateWorkoutSet();
   const [showMiss, setShowMiss] = useState(false);
   const [finishedExercise, setFinishedExercise] = useState<string | null>(null);
-  const [customWeight, setCustomWeight] = useState<number | null>(null);
   const [editingWeight, setEditingWeight] = useState(false);
   const [draftWeight, setDraftWeight] = useState('');
+  const [draftEquipment, setDraftEquipment] = useState<AccessoryEquipment>('barbell');
+  const displayMovement = (id?: string) =>
+    movementsQuery.data?.find((movement) => movement.id === id)?.name ??
+    exerciseLabels[id ?? ''] ??
+    movementLabel(id ?? 'snatch');
 
-  // The persisted workout response supplies the carried-forward load for the
-  // next set, so only the temporary edit state needs clearing here.
   const _currentSetId = q.data?.sets?.find((s) => s.status === 'pending')?.id;
   useEffect(() => {
-    setCustomWeight(null);
     setEditingWeight(false);
   }, [_currentSetId]);
 
@@ -672,30 +876,33 @@ export function WorkoutPage() {
 
   // Session complete screen
   if (w.status === 'completed') return (
-    <div className="text-center">
-      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary/20">
-        <Check size={36} className="text-secondary" />
-      </div>
-      <p className="type-caption text-primary">Session logged</p>
-      <h1 className="mt-2 type-page-title">{w.sessionName}</h1>
-      <p className="mt-3 type-body-sm text-muted-foreground">
-        {w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts
-      </p>
-      <div className="mt-8 flex flex-col gap-3">
-        <Link
-          href="/"
-          className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 type-button text-primary-foreground"
-          data-testid="link-finished-home"
-        >
-          Back to today
-        </Link>
-        <Link
-          href="/history"
-          className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 type-button"
-          data-testid="link-finished-history"
-        >
-          View history
-        </Link>
+    <div className="animate-in fade-in duration-300">
+      <MobileStatusBar />
+      <div className="px-5 pb-6 pt-4 text-center">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-secondary/20">
+          <Check size={36} className="text-secondary" />
+        </div>
+        <p className="type-caption text-primary">Session logged</p>
+        <h1 className="mt-2 type-page-title">{w.sessionName}</h1>
+        <p className="mt-3 type-body-sm text-muted-foreground">
+          {w.completedSets} sets completed · {w.missedSets} missed · {w.attempts} attempts
+        </p>
+        <div className="mt-8 flex flex-col gap-3">
+          <Link
+            href="/"
+            className="tap inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-5 type-button text-primary-foreground"
+            data-testid="link-finished-home"
+          >
+            Back to today
+          </Link>
+          <Link
+            href="/history"
+            className="tap inline-flex min-h-12 items-center justify-center rounded-lg border border-border bg-card px-5 type-button"
+            data-testid="link-finished-history"
+          >
+            View history
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -706,11 +913,10 @@ export function WorkoutPage() {
     complete.mutate({
       workoutId: w.id,
       setId: current.id,
-      data: customWeight === null ? undefined : { weight: customWeight },
     }, {
       onSuccess: (next) => {
         done(next);
-        if (isLastSetOfExercise) setFinishedExercise(exerciseLabels[current.exercise]);
+        if (isLastSetOfExercise) setFinishedExercise(displayMovement(current.movementId ?? current.exercise));
       },
     });
   };
@@ -725,7 +931,7 @@ export function WorkoutPage() {
   // Status bar for current exercise
   const exerciseStatuses: WorkoutSetStatus[] = current
     ? w.sets
-        .filter((s) => s.exercise === current.exercise)
+        .filter((s) => (s.movementId ?? s.exercise) === (current.movementId ?? current.exercise))
         .map((s) => {
           if (s.id === current.id) return 'current';
           if (s.status === 'completed') return 'completed';
@@ -738,13 +944,15 @@ export function WorkoutPage() {
   // the first pending set of the NEXT exercise — so the banner's "next" label
   // is simply current.exercise (not the exercise after that).
   const nextExerciseName = finishedExercise
-    ? (current ? exerciseLabels[current.exercise] : null)
+    ? (current ? displayMovement(current.movementId ?? current.exercise) : null)
     : null;
 
   return (
-    <div>
+    <div className="animate-in fade-in duration-300">
+      <MobileStatusBar />
+      <div className="px-5 pb-6">
       {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-6 flex items-start justify-between pt-4">
         <div>
           <Link
             href="/"
@@ -758,7 +966,7 @@ export function WorkoutPage() {
         </div>
         <div className="text-right">
           <p className="text-pb-number">{w.completedSets}/{w.sets.length}</p>
-          <p className="type-caption text-muted-foreground">reps</p>
+          <p className="type-caption text-muted-foreground">Sets</p>
         </div>
       </div>
 
@@ -767,7 +975,7 @@ export function WorkoutPage() {
         <div className="mb-6 space-y-2">
           <div className="flex items-center justify-between">
             <p className="type-caption text-muted-foreground">
-              {exerciseLabels[current.exercise]}
+              {displayMovement(current.movementId ?? current.exercise)}
             </p>
             <p className="type-caption text-muted-foreground">
               Rep {current.setNumber} / {current.totalSets}
@@ -788,13 +996,16 @@ export function WorkoutPage() {
         <>
           <WorkoutCurrentSet
             exercise={current.exercise}
+            exerciseLabel={displayMovement(current.movementId ?? current.exercise)}
             setNumber={current.setNumber}
             totalSets={current.totalSets}
-            weight={customWeight ?? current.weight}
+            weight={current.weight}
             reps={current.reps}
             percentage={current.percentage}
+            equipment={current.equipment}
             onEditWeight={() => {
-              setDraftWeight(String(customWeight ?? current.weight));
+              setDraftWeight(String(current.weight));
+              setDraftEquipment(current.equipment ?? 'barbell');
               setEditingWeight(true);
             }}
           />
@@ -844,7 +1055,10 @@ export function WorkoutPage() {
         open={editingWeight}
         onClose={() => setEditingWeight(false)}
         title="Adjust load"
-        subtitle={current ? `Calculated: ${current.weight} kg · ${current.percentage}% of your ${exerciseLabels[current.exercise]} PB` : undefined}
+        subtitle={current ? current.percentage != null
+          ? `Target: ${current.percentage}% of your ${displayMovement(current.movementId ?? current.exercise)} PB`
+          : `Programmed: ${current.weight} kg · ${accessoryEquipmentLabel(current.equipment)}`
+          : undefined}
       >
         <div className="mt-2 space-y-4">
           <Input
@@ -854,16 +1068,17 @@ export function WorkoutPage() {
             step="0.5"
             value={draftWeight}
             onChange={(e) => setDraftWeight(e.target.value)}
+            data-testid="input-workout-load"
             autoFocus
           />
-          {customWeight !== null && (
-            <Button
-              variant="tertiary"
-              className="w-full"
-              onClick={() => { setCustomWeight(null); setEditingWeight(false); }}
-            >
-              Reset to calculated ({current?.weight} kg)
-            </Button>
+          {current?.percentage == null && (
+            <Select
+              label="Equipment"
+              options={[...ACCESSORY_EQUIPMENT_OPTIONS]}
+              value={draftEquipment}
+              onChange={(event) => setDraftEquipment(event.target.value as AccessoryEquipment)}
+              data-testid="select-workout-equipment"
+            />
           )}
           <Button
             variant="secondary"
@@ -871,11 +1086,25 @@ export function WorkoutPage() {
             className="w-full"
             onClick={() => {
               const v = parseFloat(draftWeight);
-              if (!isNaN(v) && v > 0) setCustomWeight(v);
-              setEditingWeight(false);
+              if (!current || !Number.isFinite(v) || v <= 0) return;
+              updateWorkoutSet.mutate({
+                workoutId: w.id,
+                setId: current.id,
+                data: {
+                  weight: v,
+                  equipment: current.percentage == null ? draftEquipment : undefined,
+                },
+              }, {
+                onSuccess: (next) => {
+                  done(next);
+                  setEditingWeight(false);
+                },
+              });
             }}
+            loading={updateWorkoutSet.isPending}
+            data-testid="button-save-workout-load"
           >
-            <Check size={18} /> Confirm
+            <Check size={18} /> Save load
           </Button>
         </div>
       </BottomSheet>
@@ -885,7 +1114,7 @@ export function WorkoutPage() {
         open={showMiss && !!current}
         onClose={() => setShowMiss(false)}
         title="Choose your next move"
-        subtitle={`Rep ${current?.setNumber ?? ''} · ${current ? exerciseLabels[current.exercise] : ''}`}
+        subtitle={`Rep ${current?.setNumber ?? ''} · ${current ? displayMovement(current.movementId ?? current.exercise) : ''}`}
       >
         <p className="mb-5 type-body-sm text-muted-foreground">No judgement. Keep the session useful and choose what happens next.</p>
         <div className="grid gap-3">
@@ -919,6 +1148,7 @@ export function WorkoutPage() {
           </Button>
         </div>
       </BottomSheet>
+      </div>
     </div>
   );
 }
@@ -929,10 +1159,15 @@ export function WorkoutPage() {
 
 export function HistoryPage() {
   const q = useGetHistory();
+  const movementsQuery = useGetMovements();
   const [expandedPb, setExpandedPb] = useState<number | null>(null);
   if (q.isLoading) return <LoadingBlock />;
   if (q.isError)   return <ErrorBlock retry={() => q.refetch()} />;
   const history = q.data || [];
+  const displayMovement = (id: string) =>
+    movementsQuery.data?.find((movement) => movement.id === id)?.name ??
+    exerciseLabels[id] ??
+    movementLabel(id);
 
   return (
     <div>
@@ -991,7 +1226,7 @@ export function HistoryPage() {
                     <ul className="space-y-1">
                       {w.pbSets.map((s, idx) => (
                         <li key={idx} className="flex items-center justify-between">
-                          <span className="type-body-sm text-foreground/80">{exerciseLabels[s.exercise as keyof typeof exerciseLabels] ?? s.exercise}</span>
+                          <span className="type-body-sm text-foreground/80">{displayMovement(s.exercise)}</span>
                           <span className="text-pb-number text-secondary">{s.weight}<span className="ml-0.5 type-caption font-semibold text-secondary/60">kg</span></span>
                         </li>
                       ))}

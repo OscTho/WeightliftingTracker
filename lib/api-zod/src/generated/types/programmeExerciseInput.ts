@@ -5,10 +5,13 @@
  * Olympic weightlifting workout tracking API
  * OpenAPI spec version: 0.1.0
  */
+import type { AccessoryEquipment } from './accessoryEquipment';
 import type { ExerciseName } from './exerciseName';
 
 export interface ProgrammeExerciseInput {
-  exercise: ExerciseName;
+  /** @minLength 1 */
+  movementId?: string;
+  exercise?: ExerciseName;
   /**
      * @minimum 1
      * @maximum 30
@@ -23,5 +26,11 @@ export interface ProgrammeExerciseInput {
      * @minimum 1
      * @maximum 150
      */
-  percentage: number;
+  percentage?: number;
+  /**
+     * Direct working weight for an accessory movement
+     * @minimum 0
+     */
+  weight?: number;
+  equipment?: AccessoryEquipment;
 }

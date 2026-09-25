@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,14 +11,21 @@ import {
 import { useColors } from '@/hooks/useColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  getGetCurrentSessionQueryKey,
   getGetDashboardQueryKey,
   getGetProfileQueryKey,
+  useChangePassword,
   useGetProfile,
+  useLogout,
   useSaveProfile,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
+import * as SecureStore from 'expo-secure-store';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+
+const SESSION_KEY = 'lofte.session.token';
 
 const INCREMENTS: Array<1 | 2 | 2.5> = [1, 2, 2.5];
 
@@ -37,11 +43,17 @@ export default function ProfileScreen() {
 
   const { data: profile, isLoading } = useGetProfile();
   const saveProfile = useSaveProfile();
+  const changePassword = useChangePassword();
+  const logout = useLogout();
 
   const [name, setName] = useState('');
   const [pbs, setPbs] = useState({ snatch: '0', cj: '0', bsq: '0', fsq: '0' });
   const [increment, setIncrement] = useState<1 | 2 | 2.5>(2.5);
   const [saved, setSaved] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   // Populate form when profile data arrives
   useEffect(() => {
@@ -85,6 +97,46 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleLogout = () => {
+    logout.mutate(undefined, {
+      onSuccess: async () => {
+        await SecureStore.deleteItemAsync(SESSION_KEY);
+        qc.clear();
+      },
+    });
+  };
+
+  const handleChangePassword = () => {
+    setPasswordError('');
+    setPasswordChanged(false);
+    if (newPassword.length < 8 || newPassword.length > 128) {
+      setPasswordError('Password must be between 8 and 128 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+    changePassword.mutate(
+      { data: { password: newPassword } },
+      {
+        onSuccess: async (replacementSession) => {
+          if (!replacementSession.token) {
+            setPasswordError('Could not create a persistent session. Please try again.');
+            return;
+          }
+          await SecureStore.setItemAsync(SESSION_KEY, replacementSession.token);
+          qc.setQueryData(getGetCurrentSessionQueryKey(), replacementSession);
+          setNewPassword('');
+          setConfirmPassword('');
+          setPasswordChanged(true);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        },
+        onError: () => setPasswordError('Could not change your password. Please try again.'),
+      },
+    );
+  };
+
   const topPad = Platform.OS === 'web' ? 67 + 16 : 16;
   const bottomPad = Platform.OS === 'web' ? 84 + 16 : insets.bottom + 72;
 
@@ -104,11 +156,12 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView
+    <KeyboardAwareScrollViewCompat
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.content, { paddingTop: topPad, paddingBottom: bottomPad }]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      bottomOffset={60}
     >
       {/* Athlete name */}
       <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>ATHLETE</Text>
@@ -209,7 +262,67 @@ export default function ProfileScreen() {
           <Text style={[styles.saveBtnText, { color: colors.primaryForeground }]}>SAVE</Text>
         )}
       </Pressable>
-    </ScrollView>
+
+      <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 28 }]}>
+        SECURITY
+      </Text>
+      <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>
+        Changing your password signs out every other device.
+      </Text>
+      <TextInput
+        style={[styles.textInput, inputBase, styles.passwordInput]}
+        value={newPassword}
+        onChangeText={setNewPassword}
+        placeholder="New password"
+        placeholderTextColor={colors.mutedForeground}
+        secureTextEntry
+        autoCapitalize="none"
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
+        testID="input-new-password"
+      />
+      <TextInput
+        style={[styles.textInput, inputBase, styles.passwordInput]}
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        placeholder="Confirm new password"
+        placeholderTextColor={colors.mutedForeground}
+        secureTextEntry
+        autoCapitalize="none"
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="done"
+        onSubmitEditing={handleChangePassword}
+        testID="input-confirm-new-password"
+      />
+      {!!passwordError && <Text style={[styles.feedbackText, { color: colors.destructive }]}>{passwordError}</Text>}
+      {passwordChanged && <Text style={[styles.feedbackText, { color: colors.success }]}>Password changed. You are still signed in.</Text>}
+      <Pressable
+        style={({ pressed }) => [
+          styles.passwordBtn,
+          { borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+        ]}
+        onPress={handleChangePassword}
+        disabled={changePassword.isPending}
+        testID="button-change-password"
+      >
+        {changePassword.isPending
+          ? <ActivityIndicator color={colors.foreground} size="small" />
+          : <Text style={[styles.passwordBtnText, { color: colors.foreground }]}>CHANGE PASSWORD</Text>}
+      </Pressable>
+
+      <Pressable
+        style={[styles.logoutBtn, { borderColor: colors.border }]}
+        onPress={handleLogout}
+        disabled={logout.isPending}
+        testID="button-logout"
+      >
+        <Text style={[styles.logoutText, { color: colors.mutedForeground }]}>
+          {logout.isPending ? 'SIGNING OUT…' : 'SIGN OUT'}
+        </Text>
+      </Pressable>
+    </KeyboardAwareScrollViewCompat>
   );
 }
 
@@ -229,6 +342,10 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     borderWidth: 1,
   },
+  passwordInput: { marginBottom: 10 },
+  feedbackText: { fontSize: 12, fontFamily: 'Inter_500Medium', marginBottom: 10 },
+  passwordBtn: { paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center', marginBottom: 12 },
+  passwordBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', letterSpacing: 1 },
   pbRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,4 +381,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   saveBtnText: { fontSize: 14, fontFamily: 'Inter_700Bold', letterSpacing: 1 },
+  logoutBtn: { marginTop: 12, paddingVertical: 14, borderRadius: 12, borderWidth: 1, alignItems: 'center' },
+  logoutText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', letterSpacing: 1 },
 });

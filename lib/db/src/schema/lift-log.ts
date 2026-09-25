@@ -1,29 +1,34 @@
-import { jsonb, numeric, pgTable, serial, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, numeric, pgTable, serial, text, timestamp, integer, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./auth";
 
 export const athleteProfilesTable = pgTable("athlete_profiles", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   snatchPb: numeric("snatch_pb", { precision: 7, scale: 2 }).notNull(),
   cleanJerkPb: numeric("clean_jerk_pb", { precision: 7, scale: 2 }).notNull(),
   backSquatPb: numeric("back_squat_pb", { precision: 7, scale: 2 }).notNull(),
   frontSquatPb: numeric("front_squat_pb", { precision: 7, scale: 2 }).notNull(),
   roundingIncrement: numeric("rounding_increment", { precision: 3, scale: 1 }).notNull().default("1"),
-});
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (table) => ({ userIndex: uniqueIndex("athlete_profiles_user_id_unique").on(table.userId) }));
 
 export const programmesTable = pgTable("programmes", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   sessionsPerWeek: integer("sessions_per_week").notNull(),
   lengthWeeks: integer("length_weeks").notNull().default(4),
   sessions: jsonb("sessions").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => ({ userIndex: index("programmes_user_id_idx").on(table.userId) }));
 
 export const workoutsTable = pgTable("workouts", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
   programmeId: integer("programme_id").notNull(),
   programmeName: text("programme_name").notNull(),
   sessionNumber: integer("session_number").notNull(),
@@ -35,7 +40,18 @@ export const workoutsTable = pgTable("workouts", {
   missedSets: integer("missed_sets").notNull().default(0),
   attempts: integer("attempts").notNull().default(0),
   sets: jsonb("sets").notNull(),
-});
+}, (table) => ({ userIndex: index("workouts_user_id_idx").on(table.userId) }));
+
+export const movementsTable = pgTable("movements", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category").notNull(),
+  description: text("description"),
+  isCustom: boolean("is_custom").notNull().default(false),
+  ownerProfileId: integer("owner_profile_id"),
+  ownerUserId: integer("owner_user_id").references(() => usersTable.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({ ownerUserIndex: index("movements_owner_user_id_idx").on(table.ownerUserId) }));
 
 export const insertAthleteProfileSchema = createInsertSchema(athleteProfilesTable).omit({ id: true });
 export const insertProgrammeSchema = createInsertSchema(programmesTable).omit({ id: true, createdAt: true, updatedAt: true });
@@ -44,15 +60,19 @@ export const insertWorkoutSchema = createInsertSchema(workoutsTable).omit({ id: 
 export type AthleteProfileRow = typeof athleteProfilesTable.$inferSelect;
 export type ProgrammeRow = typeof programmesTable.$inferSelect;
 export type WorkoutRow = typeof workoutsTable.$inferSelect;
-export type ExerciseName = "snatch" | "clean_and_jerk" | "back_squat" | "front_squat";
+export type ExerciseName = string;
+export type AccessoryEquipment = "kettlebell" | "bands" | "barbell" | "dumbbell";
 
 export type ProgrammeExercise = {
   id?: number;
   order?: number;
-  exercise: ExerciseName;
+  movementId: string;
+  exercise?: ExerciseName;
   sets: number;
   reps: number;
-  percentage: number;
+  percentage?: number;
+  weight?: number;
+  equipment?: AccessoryEquipment;
 };
 
 export type ProgrammeSession = {
@@ -65,11 +85,13 @@ export type ProgrammeSession = {
 export type WorkoutSet = {
   id: number;
   exercise: ExerciseName;
+  movementId?: string;
   setNumber: number;
   totalSets: number;
   reps: number;
-  percentage: number;
+  percentage?: number;
   weight: number;
+  equipment?: AccessoryEquipment;
   status: "pending" | "completed" | "missed" | "skipped";
   attemptNumber: number;
   completedAt: string | null;
@@ -89,6 +111,7 @@ export type ProfileData = {
   backSquatPb: number;
   frontSquatPb: number;
   roundingIncrement: 1 | 2 | 2.5;
+  updatedAt: string | null;
 };
 
 export type WorkoutData = {
@@ -106,4 +129,4 @@ export type WorkoutData = {
   sets: WorkoutSet[];
 };
 
-export const exerciseNameSchema = z.enum(["snatch", "clean_and_jerk", "back_squat", "front_squat"]);
+export const exerciseNameSchema = z.string().min(1);

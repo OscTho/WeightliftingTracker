@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['production-smoke.spec.ts', 'password-change-real.spec.ts'],
   timeout: 30_000,
   expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,

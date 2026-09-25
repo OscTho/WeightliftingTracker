@@ -44,6 +44,87 @@ test.describe('Workout — active', () => {
     await expect(page.getByTestId('link-workout-exit')).toContainText('Exit workout');
   });
 
+  test('active workout — saves an adjusted load without completing the rep', async ({ page }) => {
+    await setupMocks(page, { workout: WORKOUT_ACTIVE });
+    let savedBody: unknown;
+    await page.route(/\/api\/workouts\/99\/sets\/303$/, async (route) => {
+      savedBody = route.request().postDataJSON();
+      const updatedWorkout = {
+        ...WORKOUT_ACTIVE,
+        sets: WORKOUT_ACTIVE.sets.map((set) => set.id === 303 ? { ...set, weight: 75 } : set),
+      };
+      await route.fulfill({ status: 200, body: JSON.stringify(updatedWorkout), contentType: 'application/json' });
+    });
+    await page.goto('/workout/99');
+
+    await page.getByTestId('button-edit-workout-load').click();
+    await page.getByTestId('input-workout-load').fill('75');
+    await page.getByTestId('button-save-workout-load').click();
+
+    await expect(page.getByTestId('button-save-workout-load')).toHaveCount(0);
+    expect(savedBody).toEqual({ weight: 75 });
+    await expect(page.locator('.text-workout-weight')).toContainText('75');
+    await expect(page.getByText('2/3')).toBeVisible();
+  });
+
+  test('accessory workout — labels and saves equipment from the load editor', async ({ page }) => {
+    const accessoryWorkout = {
+      ...WORKOUT_ACTIVE,
+      sessionName: 'Accessories',
+      completedSets: 0,
+      attempts: 0,
+      sets: [{
+        ...WORKOUT_ACTIVE.sets[0],
+        id: 401,
+        movementId: 'deadlift',
+        exercise: 'deadlift',
+        setNumber: 1,
+        totalSets: 1,
+        reps: 8,
+        percentage: undefined,
+        weight: 32,
+        equipment: 'kettlebell',
+        status: 'pending',
+        completedAt: null,
+      }],
+    };
+    await setupMocks(page, { workout: accessoryWorkout });
+    let savedBody: unknown;
+    await page.route(/\/api\/workouts\/99\/sets\/401$/, async (route) => {
+      savedBody = route.request().postDataJSON();
+      const updatedWorkout = {
+        ...accessoryWorkout,
+        sets: accessoryWorkout.sets.map((set) => ({ ...set, equipment: 'dumbbell' })),
+      };
+      await route.fulfill({ status: 200, body: JSON.stringify(updatedWorkout), contentType: 'application/json' });
+    });
+    await page.goto('/workout/99');
+
+    await expect(page.getByText('Equipment', { exact: true })).toBeVisible();
+    await expect(page.getByText('Kettlebell', { exact: true })).toBeVisible();
+    await page.getByTestId('button-edit-workout-load').click();
+    await page.getByTestId('select-workout-equipment').selectOption('dumbbell');
+    await page.getByTestId('button-save-workout-load').click();
+
+    expect(savedBody).toEqual({ weight: 32, equipment: 'dumbbell' });
+    await expect(page.getByText('Dumbbell', { exact: true })).toBeVisible();
+  });
+
+  test('active workout — uses the same status-bar space and content gutters as other pages', async ({ page }) => {
+    await setupMocks(page, { workout: WORKOUT_ACTIVE });
+    await page.goto('/workout/99');
+
+    const exitLink = page.getByTestId('link-workout-exit');
+    const completeButton = page.getByTestId('button-complete-set');
+    const exitBox = await exitLink.boundingBox();
+    const completeBox = await completeButton.boundingBox();
+
+    expect(exitBox?.x).toBe(20);
+    expect(exitBox?.y).toBeGreaterThan(44);
+    expect(completeBox?.x).toBe(20);
+    expect(completeBox?.width).toBe(page.viewportSize()?.width! - 40);
+  });
+
   test('missed-set sheet opens on miss button click', async ({ page }) => {
     await setupMocks(page, { workout: WORKOUT_ACTIVE });
     await page.goto('/workout/99');
@@ -98,6 +179,18 @@ test.describe('Workout — completed', () => {
     // Navigation links
     await expect(page.getByTestId('link-finished-home')).toBeVisible();
     await expect(page.getByTestId('link-finished-history')).toBeVisible();
+  });
+
+  test('completed state — uses the mobile status-bar space and content gutters', async ({ page }) => {
+    await setupMocks(page, { workout: WORKOUT_COMPLETED });
+    await page.goto('/workout/99');
+
+    const headingBox = await page.getByRole('heading', { level: 1 }).boundingBox();
+    const homeBox = await page.getByTestId('link-finished-home').boundingBox();
+
+    expect(headingBox?.y).toBeGreaterThan(44);
+    expect(homeBox?.x).toBe(20);
+    expect(homeBox?.width).toBe(page.viewportSize()?.width! - 40);
   });
 
   test('completed state — "Back to today" link points to home', async ({ page }) => {

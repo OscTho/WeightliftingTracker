@@ -10,4 +10,7 @@ import type { ProgrammeExerciseInput } from './programmeExerciseInput';
 export type ProgrammeExercise = ProgrammeExerciseInput & {
   id: number;
   order: number;
-};
+} & Required<Pick<ProgrammeExerciseInput & {
+  id: number;
+  order: number;
+}, 'movementId'>>;

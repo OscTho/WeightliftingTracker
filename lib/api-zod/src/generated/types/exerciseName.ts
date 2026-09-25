@@ -6,12 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ExerciseName = typeof ExerciseName[keyof typeof ExerciseName];
-
-
-export const ExerciseName = {
-  snatch: 'snatch',
-  clean_and_jerk: 'clean_and_jerk',
-  back_squat: 'back_squat',
-  front_squat: 'front_squat',
-} as const;
+/**
+ * Legacy movement identifier retained for workout compatibility
+ */
+export type ExerciseName = string;

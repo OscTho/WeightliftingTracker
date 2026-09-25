@@ -8,7 +8,9 @@
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:e2e": "playwright test --config playwright.config.ts"
+    "test:e2e": "playwright test --config playwright.config.ts && pnpm run test:password-change",
+    "test:production": "playwright test --config playwright.production.config.ts",
+    "test:password-change": "PORT=21585 BASE_PATH=/ NODE_ENV=production pnpm --filter @workspace/lift-log run build && pnpm --filter @workspace/api-server run build && node e2e/password-change-stack.mjs"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",

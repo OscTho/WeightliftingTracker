@@ -39,37 +39,39 @@ test.describe('Dashboard', () => {
     await expect(nextCard.getByText('Snatch Focus')).toBeVisible();
     // Start session button
     await expect(page.getByTestId('button-start-next')).toBeVisible();
-    // Stats row — weekly sets (scope to the grid to avoid ambiguity)
-    await expect(page.getByText('Sets this week')).toBeVisible();
-    await expect(page.locator('.grid').filter({ hasText: 'Sets this week' }).getByText('15')).toBeVisible();
-    // Recent work
-    await expect(page.getByText('Recent work')).toBeVisible();
+    // Weekly statistics and completed sets
+    await expect(page.getByText('Weekly statistics')).toBeVisible();
+    await expect(page.locator('.grid').filter({ hasText: 'Sets' }).getByText('15')).toBeVisible();
+    // Recent sessions
+    await expect(page.getByText('Recent sessions')).toBeVisible();
     await expect(page.getByTestId('link-see-history')).toBeVisible();
   });
 
-  test('no programme — prompts to browse programmes', async ({ page }) => {
+  test('no programme — prompts to create a programme', async ({ page }) => {
     await setupMocks(page, { dashboard: DASHBOARD_NO_PROGRAMME });
     await page.goto('/');
 
-    await expect(page.getByText('No session queued')).toBeVisible();
-    await expect(page.getByTestId('link-choose-programme')).toBeVisible();
-    await expect(page.getByText('Browse programmes')).toBeVisible();
+    await expect(page.getByText('No active programme')).toBeVisible();
+    await expect(page.getByTestId('button-create-first-programme')).toBeVisible();
+    await expect(page.getByText('Create programme')).toBeVisible();
   });
 
-  test('no profile — shows set-up profile prompt', async ({ page }) => {
+  test('no profile — still shows the empty training state', async ({ page }) => {
     await setupMocks(page, { dashboard: DASHBOARD_NO_PROFILE });
     await page.goto('/');
 
-    await expect(page.getByText('Set up your athlete profile')).toBeVisible();
-    await expect(page.getByTestId('link-setup-profile')).toBeVisible();
+    await expect(page.getByText('No active programme')).toBeVisible();
+    await expect(page.getByTestId('button-create-first-programme')).toBeVisible();
   });
 
-  test('typography — h1 has type-page-title class', async ({ page }) => {
+  test('typography — mobile h1 uses the display title styles', async ({ page }) => {
     await setupMocks(page, { dashboard: DASHBOARD_WITH_PROGRAMME });
     await page.goto('/');
 
     const h1 = page.getByRole('heading', { level: 1 });
-    await expect(h1).toHaveClass(/type-page-title/);
+    await expect(h1).toHaveClass(/font-display/);
+    await expect(h1).toHaveCSS('font-size', '44px');
+    await expect(h1).toHaveCSS('font-weight', '600');
   });
 
   test('typography — overline caption has type-caption class', async ({ page }) => {
